@@ -1,4 +1,4 @@
-<img width="500" height="500" alt="image" src="https://github.com/user-attachments/assets/8b24a046-ceb6-453e-8a45-0d726ca439b0" />
+<img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/8b24a046-ceb6-453e-8a45-0d726ca439b0" />
 
 
 # Momo 🤍 — your voice-driven desktop companion
