@@ -1,3 +1,6 @@
+<img width="736" height="736" alt="image" src="https://github.com/user-attachments/assets/8b24a046-ceb6-453e-8a45-0d726ca439b0" />
+
+
 # Momo 🤍 — your voice-driven desktop companion
 
 Momo is a cute robot who lives in the bottom-right corner of your screen, listens when
