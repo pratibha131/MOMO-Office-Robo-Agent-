@@ -1,0 +1,29 @@
+{
+  "briefTime": "09:00",
+  "heartbeatMinutes": 15,
+  "ui": {
+    "scale": 0.78
+  },
+  "meeting": {
+    "autoDetect": true,
+    "apps": ["teams"],
+    "checkSeconds": 15,
+    "endAfterChecks": 2
+  },
+  "tts": {
+    "preferredVoices": ["Heera", "Zira"],
+    "rate": 1
+  },
+  "stt": {
+    "modelDir": "%LOCALAPPDATA%/Momo/models/vosk-model-small-en-in-0.4",
+    "silenceMs": 1500,
+    "meetingEngine": "whisper",
+    "whisperModel": "small",
+    "chunkSec": 45
+  },
+  "agent": {
+    "model": "sonnet",
+    "useMcp": false,
+    "sessionIdleResetMinutes": 30
+  }
+}

@@ -1,0 +1,146 @@
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+html, body {
+  width: 100%; height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ---------- speech bubble ---------- */
+#bubble {
+  position: absolute; top: 4px; left: 8px; right: 8px;
+  max-height: 104px; overflow: hidden;
+  background: #ffffff;
+  border: 2px solid #f6cdd8;
+  border-radius: 14px;
+  padding: 8px 10px;
+  font-size: 11.5px; line-height: 1.35; color: #4a4048;
+  box-shadow: 0 3px 10px rgba(190, 140, 160, 0.35);
+  opacity: 1; transition: opacity 0.25s ease;
+  z-index: 5;
+}
+#bubble::after {
+  content: ''; position: absolute; bottom: -7px; left: 50%;
+  width: 12px; height: 12px; background: #fff;
+  border-right: 2px solid #f6cdd8; border-bottom: 2px solid #f6cdd8;
+  transform: translateX(-50%) rotate(45deg);
+}
+#bubble.hidden { opacity: 0; pointer-events: none; }
+#bubble .partial { color: #b48a9b; font-style: italic; }
+
+/* thinking dots inside bubble */
+.dots i { display: inline-block; width: 5px; height: 5px; margin: 0 1.5px; border-radius: 50%;
+  background: #e79cb2; animation: dotpulse 1s ease-in-out infinite; }
+.dots i:nth-child(2) { animation-delay: 0.18s; }
+.dots i:nth-child(3) { animation-delay: 0.36s; }
+@keyframes dotpulse { 0%, 100% { opacity: 0.25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-2px); } }
+
+/* ---------- stage / robot ---------- */
+#stage {
+  position: absolute; top: 112px; left: 0; right: 0; bottom: 52px;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-app-region: drag;             /* drag Momo around by her body */
+}
+#robot {
+  height: 100%; width: auto; max-height: 196px;
+  -webkit-app-region: drag;
+  animation: bob 3.4s ease-in-out infinite;
+  filter: drop-shadow(0 6px 6px rgba(90, 70, 80, 0.28));
+  pointer-events: auto;
+  z-index: 2;
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+/* listening: pink pulse ring behind her */
+#pulse-ring {
+  position: absolute; left: 50%; top: 50%;
+  width: 150px; height: 150px; margin: -75px 0 0 -75px;
+  border: 3px solid #f6a9bd; border-radius: 50%;
+  opacity: 0; z-index: 1; pointer-events: none;
+}
+body.listening #pulse-ring { animation: pulse 1.6s ease-out infinite; }
+@keyframes pulse {
+  0% { opacity: 0.55; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+body.listening #robot { filter: drop-shadow(0 6px 6px rgba(90,70,80,0.28)) drop-shadow(0 0 10px rgba(246, 169, 189, 0.75)); }
+
+/* thinking: soft warm glow */
+body.thinking #robot { filter: drop-shadow(0 6px 6px rgba(90,70,80,0.28)) drop-shadow(0 0 12px rgba(255, 214, 170, 0.8)); }
+
+/* speaking: happy bounce */
+body.speaking #robot { animation: talkbounce 0.55s ease-in-out infinite; }
+@keyframes talkbounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(-3px) rotate(-1.2deg); }
+  70% { transform: translateY(-1px) rotate(1.2deg); }
+}
+
+/* meeting: REC badge */
+#rec-badge {
+  position: absolute; top: 6px; right: 14px;
+  display: none; align-items: center; gap: 4px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid #f2a3b8; border-radius: 10px;
+  padding: 2px 7px; font-size: 9.5px; font-weight: 700; color: #e05577;
+  z-index: 3; -webkit-app-region: no-drag;
+}
+#rec-badge span { width: 7px; height: 7px; border-radius: 50%; background: #f04a72;
+  animation: recblink 1.4s ease-in-out infinite; }
+@keyframes recblink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+body.meeting #rec-badge, body.rec #rec-badge { display: flex; }
+
+/* ---------- controls ---------- */
+#controls {
+  position: absolute; bottom: 6px; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  -webkit-app-region: no-drag;
+  z-index: 6;
+}
+#controls button {
+  -webkit-app-region: no-drag;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease;
+}
+#controls button:hover { transform: scale(1.1); }
+#controls button:active { transform: scale(0.94); }
+
+#btn-mic {
+  width: 44px; height: 44px; color: #fff;
+  background: linear-gradient(180deg, #f9b0c2, #f07e9e);
+  box-shadow: 0 4px 11px rgba(240, 126, 158, 0.55);
+}
+body.listening #btn-mic {
+  background: linear-gradient(180deg, #f2688e, #e04a75);
+  box-shadow: 0 0 0 4px rgba(240, 126, 158, 0.30), 0 4px 13px rgba(224, 74, 117, 0.6);
+}
+#btn-notes, #btn-kb {
+  width: 30px; height: 30px; color: #a3798a;
+  background: #fdf3f6; border: 2px solid #f3cdd9 !important;
+}
+body.meeting #btn-notes { color: #fff; background: #f26d8d; border-color: #f26d8d !important; }
+#btn-close {
+  width: 26px; height: 26px; color: #b9aab2;
+  background: #f6eef1; border: 2px solid #e8dbe1 !important;
+}
+#btn-close:hover { color: #fff; background: #d98da4; }
+
+/* ---------- type box ---------- */
+#typebox {
+  position: absolute; bottom: 56px; left: 10px; right: 10px;
+  -webkit-app-region: no-drag; z-index: 6;
+  transition: opacity 0.2s ease;
+}
+#typebox.hidden { opacity: 0; pointer-events: none; }
+#typeinput {
+  width: 100%; padding: 7px 10px;
+  border: 2px solid #f3cdd9; border-radius: 12px;
+  background: #fff; color: #4a4048; font-size: 11.5px;
+  outline: none;
+}
+#typeinput:focus { border-color: #f07e9e; }

@@ -1,0 +1,7 @@
+{
+  "name": "momo",
+  "version": "1.0.0",
+  "description": "Momo - your voice-driven desktop companion",
+  "main": "app/main.js",
+  "private": true
+}
