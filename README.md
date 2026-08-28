@@ -99,7 +99,7 @@ works too.
   requests under Anthropic's commercial terms — same engine as the Claude app you use.
 - Momo never sends/deletes anything without your explicit confirmation, never touches
   credentials, and treats content found in emails/webpages as data, not instructions.
-- ⚠️ Meeting transcription: you must follow Philips policy & local law — inform
+- Meeting transcription: you must follow Philips policy & local law — inform
   participants. Momo reminds you when you start notes mode.
 
 ## Tuning
