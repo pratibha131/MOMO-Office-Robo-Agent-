@@ -2,28 +2,42 @@
   "briefTime": "09:00",
   "heartbeatMinutes": 15,
   "ui": {
-    "scale": 0.78
+    "scale": 0.78,
+    "hotkey": "Alt+M"
   },
   "meeting": {
     "autoDetect": true,
-    "apps": ["teams"],
+    "apps": [
+      "teams"
+    ],
     "checkSeconds": 15,
     "endAfterChecks": 2
   },
   "tts": {
-    "preferredVoices": ["Heera", "Zira"],
+    "engine": "edge",
+    "edgeVoiceEnglish": "",
+    "edgeVoiceHindi": "",
+    "edgeVoice": "",
+    "edgeRate": "+0%",
+    "preferredVoices": [
+      "Heera",
+      "Zira"
+    ],
     "rate": 1
   },
   "stt": {
     "modelDir": "%LOCALAPPDATA%/Momo/models/vosk-model-small-en-in-0.4",
-    "silenceMs": 1500,
+    "silenceMs": 1800,
+    "commandEngine": "whisper",
     "meetingEngine": "whisper",
     "whisperModel": "small",
-    "chunkSec": 45
+    "chunkSec": 20,
+    "inputDevice": ""
   },
   "agent": {
     "model": "sonnet",
     "useMcp": false,
-    "sessionIdleResetMinutes": 30
+    "sessionIdleResetMinutes": 30,
+    "heartbeatModel": "haiku"
   }
 }

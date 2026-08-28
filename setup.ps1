@@ -95,5 +95,21 @@ if (-not (Test-Path $edist)) {
   Pop-Location
 }
 
+# ---------- Start Menu shortcut with global hotkey (works even when closed) ----------
+try {
+  $ws = New-Object -ComObject WScript.Shell
+  $lnk = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Momo.lnk"
+  $s = $ws.CreateShortcut($lnk)
+  $s.TargetPath = Join-Path $AppDir "node_modules\electron\dist\electron.exe"
+  $s.Arguments = '"' + $Project + '\."'
+  $s.WorkingDirectory = $Project
+  $ico = Join-Path $Project "app\renderer\momo.ico"
+  if (Test-Path $ico) { $s.IconLocation = $ico }
+  $s.Hotkey = "Ctrl+Alt+M"
+  $s.Description = "Momo - your desktop companion (Ctrl+Alt+M)"
+  $s.Save()
+  Write-Host "      Ctrl+Alt+M summons Momo from anywhere (Start Menu shortcut)" -ForegroundColor Green
+} catch { Write-Host "      shortcut/hotkey setup failed: $_" -ForegroundColor Yellow }
+
 Write-Host ""
-Write-Host "Setup complete. Start Momo with:  Start-Momo.bat" -ForegroundColor Magenta
+Write-Host "Setup complete. Start Momo with:  Start-Momo.bat  (or press Ctrl+Alt+M)" -ForegroundColor Magenta

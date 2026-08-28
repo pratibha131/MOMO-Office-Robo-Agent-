@@ -34,6 +34,21 @@ out loud when it's done.
 During a live call Momo never speaks out loud (her voice would reach the meeting) —
 replies appear in her bubble instead.
 
+## Summon & dismiss — Ctrl+Alt+M
+**Ctrl+Alt+M works always**: if Momo is closed it launches her; if she's running it
+toggles her hidden/visible (appearing = already listening, just speak). While hidden
+her background work — meetings, reminders, the brief — keeps running, and she pops up
+on her own when she has something to say. **Alt+M** also toggles while she's running.
+Her **✖ button closes the app completely** (background work stops too; Ctrl+Alt+M
+brings her back). The tray icon toggles on click, quits on right-click.
+
+## To-dos live in OneNote
+Say "add fixing the PCP sheet to my to-do list" -> it appears with a checkbox on the
+OneNote page **Momo -> Momo To-Dos** (notebook "Pratibha @ Philips") and in her own
+tracker. Say "I've completed the PCP sheet" -> the box gets ticked and the line is
+**struck through but kept** as a record. Tick boxes by hand in OneNote too — she
+notices on her next heartbeat and stops reminding you about those.
+
 ## Memory
 - **Session memory**: follow-ups like "yes, send it" just work.
 - **Long-term memory** (`data/memory.md`): people and their emails, projects,
@@ -42,12 +57,28 @@ replies appear in her bubble instead.
 
 Momo asks a question out loud → the mic re-opens by itself so you can just answer.
 
-## The mic (and why it doesn't cut off any more)
-The old 1–2 second cutoff is what browser speech recognition does (it stops at the first
-pause). Momo instead runs a local Vosk recognizer: tap mic → she listens **until you
-finish a sentence and stay quiet for 1.5 s** (configurable `stt.silenceMs`), shows the
-live transcript in her bubble, then acts. Tap again to cancel. Fully offline — audio
-never leaves the laptop.
+## The mic (accurate, quiet-voice friendly, multilingual)
+A persistent ear daemon loads the speech models once at startup, so the mic responds
+instantly. While you speak, Vosk streams rough live text into her bubble; when you
+pause for ~1.8 s (`stt.silenceMs`), **Whisper transcribes the whole utterance** —
+accurate on soft voices (auto-gain up to 8×), Indian names (Kavya, Pratibha), and
+Hindi/Hinglish commands. Tap again to cancel. Fully offline — audio never leaves the
+laptop. Don't worry if the live bubble text looks rough; the final text she acts on is
+the accurate one.
+
+## Her voice & language
+Soft, human Microsoft neural voices — Momo speaks with **Neerja** (female), Toto with
+**Prabhat** (male). Talk to them in English, Hindi, or Hinglish — they understand it
+all, and **always answer in English**. Change voices via `tts.edgeVoiceEnglish` in
+config.json, speed via `tts.edgeRate` ("+10%"). If the network blocks the neural voice
+she falls back to the offline Windows voice; `tts.engine: "sapi"` forces offline.
+
+## Finding files ("open the deck they showed")
+Ask her to find/open any file: she searches the Windows index (local drives, OneDrive,
+synced SharePoint, even Outlook attachments), opens the best match, or — if it only
+lives on the Philips intranet — opens a SharePoint search for it in your browser.
+Meeting notes track a "Files referenced" list, so "open the file from the meeting"
+works too.
 
 ## Where things live
 - `CLAUDE.md` — Momo's persona + hard rules (never send without your yes, etc.)

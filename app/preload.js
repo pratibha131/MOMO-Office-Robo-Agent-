@@ -8,5 +8,6 @@ contextBridge.exposeInMainWorld('momo', {
   onState: (fn) => ipcRenderer.on('momo:state', (e, s) => fn(s)),
   onBubble: (fn) => ipcRenderer.on('momo:bubble', (e, b) => fn(b)),
   onPartial: (fn) => ipcRenderer.on('momo:partial', (e, t) => fn(t)),
-  onRec: (fn) => ipcRenderer.on('momo:rec', (e, b) => fn(b))
+  onRec: (fn) => ipcRenderer.on('momo:rec', (e, b) => fn(b)),
+  onProfile: (fn) => ipcRenderer.on('momo:profile', (e, p) => fn(p))
 });

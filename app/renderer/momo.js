@@ -26,6 +26,16 @@ window.momo.onState((s) => {
 
 window.momo.onBubble((b) => showBubble(escapeHtml(b.text), b.sticky));
 
+// character comes from data/profile.json (momo = pink, toto = blue) —
+// body image AND accent theme both follow the profile
+window.momo.onProfile((p) => {
+  const r = document.getElementById('robot');
+  r.src = p.character + '.png';
+  r.alt = p.name;
+  document.body.classList.remove('char-momo', 'char-toto');
+  document.body.classList.add('char-' + p.character);
+});
+
 // REC badge tracks actual capture, independent of the animation state —
 // it must never lie about whether the meeting is being transcribed.
 window.momo.onRec((on) => document.body.classList.toggle('rec', !!on));

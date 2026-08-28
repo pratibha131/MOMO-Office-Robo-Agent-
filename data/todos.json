@@ -1,1 +1,4 @@
-[]
+[{ "id": "t-20260828-1", "task": "Fix the VCP execution sheet Excel file", "assigned_by": "self",
+   "due": null, "due_type": null, "source": null, "done": false, "reminded": false },
+ { "id": "t-20260828-2", "task": "Prepare the VCP review deck", "assigned_by": "self",
+   "due": null, "due_type": null, "source": null, "done": false, "reminded": false }]

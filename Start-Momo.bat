@@ -7,4 +7,5 @@ if not exist "%MOMO_HOME%\app\node_modules\electron\dist\electron.exe" (
   pause
   exit /b 1
 )
-start "Momo" "%MOMO_HOME%\app\node_modules\electron\dist\electron.exe" "%~dp0" >> "%MOMO_HOME%\momo.log" 2>&1
+rem %~dp0 ends with a backslash which would escape the closing quote - append a dot
+start "Momo" "%MOMO_HOME%\app\node_modules\electron\dist\electron.exe" "%~dp0."

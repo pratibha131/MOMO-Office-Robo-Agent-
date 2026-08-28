@@ -1,26 +1,31 @@
-"""Momo's ears: microphone / system-audio capture + offline speech-to-text.
+"""Momo's ears — a persistent listening daemon.
 
-Command mode (default, --command-engine whisper):
-    Hybrid listener. Vosk streams LIVE partials (so the bubble shows text as you
-    speak) and, together with an adaptive energy detector, decides when the
-    utterance ended. The final command text comes from faster-whisper — far more
-    accurate, quiet-voice tolerant, and multilingual (English/Hindi/Hinglish,
-    names like Kavya/Pratibha). Auto-gain boosts soft speech up to 8x.
-    --command-engine vosk falls back to pure vosk streaming.
+Started once when Momo starts, it loads the speech models ONCE and then waits for
+commands on stdin, so tapping the mic responds instantly.
 
-Meeting mode (--meeting, --engine whisper):
-    Chunked multilingual transcription: mic = [you] (auto-gain), system loopback
-    = [them]; chunks transcribed in a worker and appended to --transcript with
-    elapsed timestamps. --engine vosk = legacy English-only streaming.
+Why hybrid: Vosk streams live partial text (the bubble updates as you speak) and,
+with an adaptive energy detector, decides when you stopped. The FINAL text comes
+from faster-whisper — far more accurate on quiet speech, Indian names (Kavya,
+Pratibha), and Hindi/Hinglish. Auto-gain boosts soft voices up to 8x, so you can
+speak normally instead of loudly.
 
-Emits JSON lines on stdout:
-  {"event":"ready","device":"..."}      capture running
-  {"event":"partial","text":"..."}      live partial (command mode)
-  {"event":"final","text":"..."}        finalized utterance (command mode)
-  {"event":"status","message":"..."}    progress info
-  {"event":"error","message":"..."}
+stdin commands (one per line):
+  listen                 open the mic and transcribe one utterance
+  cancel                 stop listening, discard (also suppresses an in-flight final)
+  meeting <path>         start meeting capture (mic = [you], speakers = [them])
+  meeting-stop           finish meeting capture, flush transcript (async, non-blocking)
+  quit                   shut down
 
-Graceful stop: send the line "stop" on stdin (or close stdin).
+stdout events (one JSON per line):
+  {"event":"daemon-ready","device":"..."}     models loaded, ready for commands
+  {"event":"listening","device":"..."}        mic open for a command
+  {"event":"partial","text":"..."}            live text while you speak
+  {"event":"transcribing"}                    turning the utterance into final text
+  {"event":"final","text":"..."}              the recognized command
+  {"event":"cancelled"}                       listening aborted, nothing recognized
+  {"event":"meeting-started","transcript":"..."}
+  {"event":"meeting-stopped"}
+  {"event":"status","message":"..."} / {"event":"error","message":"..."}
 """
 import argparse
 import json
@@ -31,14 +36,17 @@ import threading
 import time
 
 # Windows pipes default to the ANSI codepage; force UTF-8 so Hindi/accented text
-# can't crash the process mid-listen.
+# can't crash the daemon mid-listen.
 for _s in (sys.stdout, sys.stderr):
     try:
         _s.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
 
+SAMPLE_RATE = 16000
 _emit_lock = threading.Lock()
+DBG = os.environ.get("MOMO_DEBUG") == "1"
+_t0 = time.monotonic()
 
 
 def emit(obj):
@@ -47,491 +55,566 @@ def emit(obj):
         sys.stdout.flush()
 
 
+def dbg(msg):
+    if DBG:
+        print(f"dbg {time.monotonic()-_t0:6.2f}s {msg}", file=sys.stderr, flush=True)
+
+
 def fmt_elapsed(sec):
     sec = int(sec)
     return f"{sec // 60:02d}:{sec % 60:02d}"
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--model", required=True, help="path to vosk model dir")
-    ap.add_argument("--silence-ms", type=int, default=1500)
-    ap.add_argument("--meeting", action="store_true")
-    ap.add_argument("--transcript", default=None)
-    ap.add_argument("--engine", choices=["whisper", "vosk"], default="whisper",
-                    help="meeting-mode STT engine")
-    ap.add_argument("--command-engine", choices=["whisper", "vosk"], default="whisper",
-                    help="command-mode final-text engine")
-    ap.add_argument("--whisper-model", default="small")
-    ap.add_argument("--chunk-sec", type=int, default=45)
-    ap.add_argument("--input-device", default=None,
-                    help="substring of the input device name (default: system default)")
-    args = ap.parse_args()
+class AutoGain:
+    """Track a decaying peak so quiet speech gets amplified, loud speech doesn't clip."""
 
-    DBG = os.environ.get("MOMO_DEBUG") == "1"
-    _boot0 = time.monotonic()
+    def __init__(self):
+        self.ema_peak = 4000.0
 
-    def bootdbg(msg):
-        if DBG:
-            print(f"boot {time.monotonic()-_boot0:5.2f}s {msg}", file=sys.stderr, flush=True)
-
-    bootdbg("args parsed")
-    if args.meeting and not args.transcript:
-        emit({"event": "error", "message": "--meeting requires --transcript"})
-        sys.exit(2)
-
-    try:
-        import numpy as np
-        import sounddevice as sd
-    except Exception as e:  # noqa: BLE001
-        emit({"event": "error", "message": f"missing python deps: {e}"})
-        sys.exit(2)
-    bootdbg("numpy + sounddevice imported")
-
-    sample_rate = 16000
-    use_whisper_meeting = args.meeting and args.engine == "whisper"
-    use_whisper_command = (not args.meeting) and args.command_engine == "whisper"
-
-    # ---- input device ----
-    device = None
-    device_name = "default"
-    try:
-        if args.input_device:
-            for i, d in enumerate(sd.query_devices()):
-                if d.get("max_input_channels", 0) > 0 and \
-                        args.input_device.lower() in d.get("name", "").lower():
-                    device = i
-                    device_name = d["name"]
-                    break
-            if device is None:
-                emit({"event": "status",
-                      "message": f"input device '{args.input_device}' not found, using default"})
-        if device is None:
-            di = sd.query_devices(kind="input")
-            device_name = di.get("name", "default")
-    except Exception:
-        pass
-
-    # ---- vosk (partials/VAD in command mode; legacy meeting engine) ----
-    vosk = None
-    model = None
-    if not use_whisper_meeting:
-        try:
-            import vosk as _vosk
-            vosk = _vosk
-        except Exception as e:  # noqa: BLE001
-            emit({"event": "error", "message": f"missing python deps: {e}"})
-            sys.exit(2)
-        if not os.path.isdir(args.model):
-            emit({"event": "error", "message": f"vosk model not found: {args.model}"})
-            sys.exit(2)
-        vosk.SetLogLevel(-1)
-        try:
-            model = vosk.Model(args.model)
-        except Exception as e:  # noqa: BLE001
-            emit({"event": "error", "message": f"failed to load speech model: {e}"})
-            sys.exit(2)
-        bootdbg("vosk model loaded")
-
-    def load_whisper():
-        """Import + load in the MAIN thread (thread-side imports deadlock on
-        Windows piped stdio), preferring the local cache (network check is slow)."""
-        from faster_whisper import WhisperModel
-        try:
-            wm = WhisperModel(args.whisper_model, device="cpu",
-                              compute_type="int8", cpu_threads=4, local_files_only=True)
-        except Exception:
-            wm = WhisperModel(args.whisper_model, device="cpu",
-                              compute_type="int8", cpu_threads=4)
-        return wm
-
-    stop_event = threading.Event()
-
-    def stdin_watcher():
-        # RAW os.read: iterating sys.stdin from a thread holds the TextIOWrapper
-        # lock while blocked, deadlocking main-thread imports on piped stdio.
-        try:
-            while True:
-                data = os.read(0, 1024)
-                if not data or b"stop" in data.lower():
-                    break
-        except Exception:
-            pass
-        stop_event.set()
-
-    def start_stdin_watcher():
-        # started LAST, after all imports/model loads
-        threading.Thread(target=stdin_watcher, daemon=True).start()
-        bootdbg("stdin watcher started")
-
-    # ---- transcript sink (thread-safe) ----
-    transcript_fh = None
-    transcript_lock = threading.Lock()
-    if args.transcript:
-        d = os.path.dirname(args.transcript)
-        if d:
-            os.makedirs(d, exist_ok=True)
-        transcript_fh = open(args.transcript, "a", encoding="utf-8")
-        with transcript_lock:
-            transcript_fh.write(
-                f"\n--- capture started {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
-            transcript_fh.flush()
-
-    def tlog(tag, txt):
-        if transcript_fh and txt:
-            with transcript_lock:
-                if transcript_fh.closed:
-                    return  # straggling thread after shutdown: drop, don't crash
-                try:
-                    transcript_fh.write(f"[{tag}] {txt}\n")
-                    transcript_fh.flush()
-                except ValueError:
-                    pass
-
-    bootdbg("transcript opened")
-    t_start = time.monotonic()
-
-    def dbg(msg):
-        if DBG:
-            emit({"event": "status", "message": f"dbg {time.monotonic()-t_start:.1f}s {msg}"})
-
-    # ---- auto-gain: boost quiet voices (up to 8x) so soft speech is heard ----
-    def make_agc():
-        return {"ema_peak": 4000.0}
-
-    def boost(pcm_bytes, agc):
+    def apply(self, np, pcm_bytes):
+        """Return (boosted_bytes, raw_float_array). Detection MUST use the raw
+        array: boosting lifts room noise over any fixed threshold."""
         a = np.frombuffer(pcm_bytes, dtype=np.int16).astype(np.float32)
         if a.size == 0:
             return pcm_bytes, a
+        raw = a
         peak = float(np.abs(a).max())
-        if peak > agc["ema_peak"]:
-            agc["ema_peak"] = peak                      # attack: follow loud speech fast
+        if peak > self.ema_peak:
+            self.ema_peak = peak                                  # fast attack
         else:
-            agc["ema_peak"] = agc["ema_peak"] * 0.998 + peak * 0.002   # slow decay
-        gain = min(8.0, 26000.0 / max(agc["ema_peak"], 400.0))
+            self.ema_peak = self.ema_peak * 0.998 + peak * 0.002   # slow decay
+        gain = min(8.0, 26000.0 / max(self.ema_peak, 400.0))
         if gain > 1.0:
             a = np.clip(a * gain, -32767, 32767)
-        return a.astype(np.int16).tobytes(), a
+        return a.astype(np.int16).tobytes(), raw
 
-    # ================= WHISPER MEETING MODE =================
-    if use_whisper_meeting:
-        try:
-            wm = load_whisper()
-            emit({"event": "status", "message": "whisper model ready"})
-        except Exception as e:  # noqa: BLE001
-            emit({"event": "error", "message": f"whisper unavailable: {e}"})
-            sys.exit(2)
-        bootdbg("whisper loaded")
 
-        jobs: "queue.Queue" = queue.Queue()
-        bufs = {"you": bytearray(), "them": bytearray()}
-        buf_start = {"you": 0.0, "them": 0.0}
-        buf_lock = threading.Lock()
-        you_agc = make_agc()
+class Ear:
+    def __init__(self, args):
+        self.args = args
+        self.listening = False
+        self.listen_gen = 0            # bumped by cancel: suppresses in-flight finals
+        self.meeting = False
+        self.meeting_gen = 0           # each meeting gets its own transcript handle
+        self.gen_fh = {}               # meeting_gen -> open transcript file
+        self.meeting_t0 = 0.0
+        self.stream = None
+        self.stream_lock = threading.RLock()
+        self.cmd_q = queue.Queue()
+        self.jobs = queue.Queue()
+        self.bufs = {"you": bytearray(), "them": bytearray()}
+        self.buf_start = {"you": 0.0, "them": 0.0}
+        self.buf_lock = threading.Lock()
+        self.transcript_lock = threading.Lock()
+        self.whisper_lock = threading.Lock()
+        self.pending = 0               # jobs enqueued but not yet fully written
+        self.pending_lock = threading.Lock()
+        self.cmd_priority = threading.Event()   # a command outranks meeting chunks
+        self.stop_all = threading.Event()
+        self.loop_stop = threading.Event()
+        self.loop_thread = None
+        self.device = None
+        self.device_name = "default"
+        self.noise_floor = 150.0       # learned across utterances, not reset each time
+        self.you_agc = AutoGain()
+        self.cmd_agc = AutoGain()
 
-        def push_audio(tag, pcm_bytes):
-            with buf_lock:
-                if not bufs[tag]:
-                    buf_start[tag] = time.monotonic() - t_start
-                bufs[tag].extend(pcm_bytes)
-                if len(bufs[tag]) >= args.chunk_sec * sample_rate * 2:
-                    jobs.put((tag, buf_start[tag], bytes(bufs[tag])))
-                    bufs[tag] = bytearray()
-
-        def flush_bufs():
-            with buf_lock:
-                for tag in ("you", "them"):
-                    if bufs[tag]:
-                        jobs.put((tag, buf_start[tag], bytes(bufs[tag])))
-                        bufs[tag] = bytearray()
-
-        def whisper_worker():
-            dbg("worker thread started")
-            while True:
-                job = jobs.get()
-                if job is None:
-                    break
-                tag, started, pcm = job
-                try:
-                    audio = np.frombuffer(pcm, dtype=np.int16).astype(np.float32) / 32768.0
-                    dbg(f"job {tag} {audio.size/sample_rate:.1f}s peak={float(np.abs(audio).max()):.4f}")
-                    if audio.size < sample_rate // 2 or np.abs(audio).max() < 0.004:
-                        continue  # sub-half-second or silent chunk: skip
-                    segments, info = wm.transcribe(
-                        audio, language=None, vad_filter=True, beam_size=1)
-                    text = " ".join(s.text.strip() for s in segments).strip()
-                    dbg(f"transcribed {tag}: {len(text)} chars")
-                    if text:
-                        tlog(f"{tag} +{fmt_elapsed(started)}", text)
-                except Exception as e:  # noqa: BLE001
-                    emit({"event": "error", "message": f"transcribe chunk failed: {e}"})
-
-        worker = threading.Thread(target=whisper_worker, daemon=True)
-        worker.start()
-        bootdbg("worker started")
-
-        def mic_cb(indata, frames, t, status):  # noqa: ARG001
-            b, _ = boost(bytes(indata), you_agc)
-            push_audio("you", b)
+    # ---------- setup ----------
+    def load(self):
+        import numpy as np
+        import sounddevice as sd
+        self.np = np
+        self.sd = sd
+        dbg("numpy + sounddevice imported")
 
         try:
-            stream = sd.RawInputStream(samplerate=sample_rate, blocksize=4000,
-                                       dtype="int16", channels=1,
-                                       callback=mic_cb, device=device)
-            stream.start()
-        except Exception as e:  # noqa: BLE001
-            emit({"event": "error", "message": f"microphone unavailable: {e}"})
-            sys.exit(2)
-        bootdbg("mic stream started")
-
-        def run_loopback():
-            try:
-                import soundcard as sc
-            except Exception as e:  # noqa: BLE001
-                emit({"event": "error",
-                      "message": f"loopback unavailable, meeting notes use mic only: {e}"})
-                return
-            last_err = 0.0
-            while not stop_event.is_set():
-                try:
-                    spk = sc.default_speaker()
-                    loop_mic = sc.get_microphone(id=str(spk.name), include_loopback=True)
-                    with loop_mic.recorder(samplerate=sample_rate, channels=1,
-                                           blocksize=4000) as lr:
-                        last_dev_check = time.monotonic()
-                        while not stop_event.is_set():
-                            data = lr.record(numframes=None)  # non-blocking-ish
-                            if data is not None and len(data):
-                                dd = data if data.ndim == 1 else data[:, 0]
-                                pcm = (np.clip(dd, -1, 1) * 32767).astype(np.int16).tobytes()
-                                push_audio("them", pcm)
-                            else:
-                                stop_event.wait(0.05)
-                            if time.monotonic() - last_dev_check > 5:
-                                last_dev_check = time.monotonic()
-                                try:
-                                    if sc.default_speaker().name != spk.name:
-                                        break  # follow default-device switches
-                                except Exception:
-                                    break
-                except Exception as e:  # noqa: BLE001
-                    if time.monotonic() - last_err > 30:
-                        last_err = time.monotonic()
-                        emit({"event": "error", "message": f"loopback hiccup, retrying: {e}"})
-                    stop_event.wait(1.0)
-
-        loop_thread = threading.Thread(target=run_loopback, daemon=True)
-        loop_thread.start()
-        bootdbg("loopback thread started")
-        start_stdin_watcher()
-
-        emit({"event": "ready", "device": device_name})
-        while not stop_event.is_set():
-            stop_event.wait(0.5)
-
-        try:
-            stream.stop()
+            if self.args.input_device:
+                for i, d in enumerate(sd.query_devices()):
+                    if d.get("max_input_channels", 0) > 0 and \
+                            self.args.input_device.lower() in d.get("name", "").lower():
+                        self.device = i
+                        self.device_name = d["name"]
+                        break
+                if self.device is None:
+                    emit({"event": "status",
+                          "message": f"input device '{self.args.input_device}' not found, using default"})
+            if self.device is None:
+                self.device_name = sd.query_devices(kind="input").get("name", "default")
         except Exception:
             pass
-        loop_thread.join(timeout=2.0)
-        flush_bufs()
-        jobs.put(None)
-        emit({"event": "status", "message": "finishing transcription…"})
-        worker.join(timeout=240.0)
-        if transcript_fh:
-            with transcript_lock:
-                transcript_fh.write(
-                    f"--- capture ended {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
-                transcript_fh.close()
-        return
 
-    # ================= COMMAND MODE (hybrid) & VOSK MEETING =================
-    wm = None
-    if use_whisper_command:
-        try:
-            wm = load_whisper()
-            emit({"event": "status", "message": "whisper model ready"})
-        except Exception as e:  # noqa: BLE001
-            emit({"event": "status",
-                  "message": f"whisper unavailable, falling back to vosk: {e}"})
-            use_whisper_command = False
-        bootdbg("whisper loaded (command)")
+        import vosk
+        vosk.SetLogLevel(-1)
+        self.vosk = vosk
+        if not os.path.isdir(self.args.model):
+            emit({"event": "error", "message": f"vosk model not found: {self.args.model}"})
+            sys.exit(2)
+        self.vmodel = vosk.Model(self.args.model)
+        dbg("vosk model loaded")
 
-    rec = vosk.KaldiRecognizer(model, sample_rate)
-    rec.SetWords(False)
-
-    audio_q: "queue.Queue[bytes]" = queue.Queue()
-
-    def mic_cb(indata, frames, t, status):  # noqa: ARG001
-        audio_q.put(bytes(indata))
-
-    try:
-        stream = sd.RawInputStream(samplerate=sample_rate, blocksize=4000, dtype="int16",
-                                   channels=1, callback=mic_cb, device=device)
-        stream.start()
-    except Exception as e:  # noqa: BLE001
-        emit({"event": "error", "message": f"microphone unavailable: {e}"})
-        sys.exit(2)
-    bootdbg("mic stream started")
-
-    loop_thread = None
-    if args.meeting:  # legacy vosk meeting engine
-        def run_loopback():
+        self.wm = None
+        if self.args.engine == "whisper":
             try:
-                import soundcard as sc
-            except Exception as e:  # noqa: BLE001
-                emit({"event": "error",
-                      "message": f"loopback unavailable, meeting notes use mic only: {e}"})
-                return
-            rec2 = vosk.KaldiRecognizer(model, sample_rate)
-            last_err = 0.0
-            them_heard = False
-            them_last = time.monotonic()
-            while not stop_event.is_set():
+                from faster_whisper import WhisperModel
                 try:
-                    spk = sc.default_speaker()
-                    loop_mic = sc.get_microphone(id=str(spk.name), include_loopback=True)
-                    with loop_mic.recorder(samplerate=sample_rate, channels=1,
-                                           blocksize=4000) as lr:
-                        last_dev_check = time.monotonic()
-                        while not stop_event.is_set():
-                            data = lr.record(numframes=None)
-                            now = time.monotonic()
-                            if data is not None and len(data):
-                                dd = data if data.ndim == 1 else data[:, 0]
-                                pcm = (np.clip(dd, -1, 1) * 32767).astype(np.int16).tobytes()
-                                if rec2.AcceptWaveform(pcm):
-                                    tlog("them", json.loads(rec2.Result()).get("text", ""))
-                                    them_heard = False
-                                elif json.loads(rec2.PartialResult()).get("partial", ""):
-                                    them_heard = True
-                                    them_last = now
-                            else:
-                                stop_event.wait(0.05)
-                            if them_heard and (now - them_last) * 1000 >= args.silence_ms:
-                                tlog("them", json.loads(rec2.FinalResult()).get("text", ""))
-                                rec2 = vosk.KaldiRecognizer(model, sample_rate)
-                                them_heard = False
-                            if now - last_dev_check > 5:
-                                last_dev_check = now
-                                try:
-                                    if sc.default_speaker().name != spk.name:
-                                        break
-                                except Exception:
-                                    break
-                except Exception as e:  # noqa: BLE001
-                    if time.monotonic() - last_err > 30:
-                        last_err = time.monotonic()
-                        emit({"event": "error", "message": f"loopback hiccup, retrying: {e}"})
-                    stop_event.wait(1.0)
+                    # cached model: skip the slow HuggingFace network check
+                    self.wm = WhisperModel(self.args.whisper_model, device="cpu",
+                                           compute_type="int8", cpu_threads=4,
+                                           local_files_only=True)
+                except Exception:
+                    self.wm = WhisperModel(self.args.whisper_model, device="cpu",
+                                           compute_type="int8", cpu_threads=4)
+                dbg("whisper model loaded")
+            except Exception as e:  # noqa: BLE001
+                emit({"event": "status",
+                      "message": f"whisper unavailable, using vosk only: {e}"})
+
+    # ---------- transcript (per meeting generation) ----------
+    def tlog(self, gen, tag, txt):
+        fh = self.gen_fh.get(gen)
+        if fh and txt:
+            with self.transcript_lock:
+                if fh.closed:
+                    return
+                try:
+                    fh.write(f"[{tag}] {txt}\n")
+                    fh.flush()
+                except ValueError:
+                    pass
+
+    # ---------- mic stream (shared by command + meeting) ----------
+    def _mic_cb(self, indata, frames, t, status):  # noqa: ARG001
+        raw = bytes(indata)
+        if self.meeting:
+            b, _ = self.you_agc.apply(self.np, raw)
+            self.push_audio("you", b)
+        if self.listening:
+            self.cmd_q.put(raw)
+
+    def _feed_file(self):
+        """Diagnostics: stream a WAV through the same path the microphone uses."""
+        import wave
+        np = self.np
+        try:
+            with wave.open(self.args.test_feed) as w:
+                sr = w.getframerate()
+                pcm = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16)
+            if sr != SAMPLE_RATE:                       # cheap resample to 16k
+                idx = (np.arange(int(len(pcm) * SAMPLE_RATE / sr)) * sr / SAMPLE_RATE)
+                pcm = pcm[np.clip(idx.astype(np.int64), 0, len(pcm) - 1)]
+            block = 4000
+            for i in range(0, len(pcm), block):
+                if self.stop_all.is_set() or self.stream != "feed":
+                    return
+                chunk = pcm[i:i + block]
+                if len(chunk) < block:
+                    chunk = np.pad(chunk, (0, block - len(chunk)))
+                self._mic_cb(chunk.tobytes(), block, None, None)
+                time.sleep(block / SAMPLE_RATE)
+            silence = np.zeros(block, dtype=np.int16)
+            for _ in range(40):
+                if self.stop_all.is_set() or self.stream != "feed":
+                    return
+                self._mic_cb(silence.tobytes(), block, None, None)
+                time.sleep(block / SAMPLE_RATE)
+        finally:
+            # allow the NEXT listen/meeting to start a fresh feed pass
+            with self.stream_lock:
+                if self.stream == "feed":
+                    self.stream = None
+
+    def ensure_stream(self):
+        with self.stream_lock:
+            if self.stream is not None:
+                return True
+            if self.args.test_feed:
+                self.stream = "feed"
+                threading.Thread(target=self._feed_file, daemon=True).start()
+                dbg("test feed started")
+                return True
             try:
-                tlog("them", json.loads(rec2.FinalResult()).get("text", ""))
-            except Exception:
-                pass
+                self.stream = self.sd.RawInputStream(
+                    samplerate=SAMPLE_RATE, blocksize=4000, dtype="int16", channels=1,
+                    callback=self._mic_cb, device=self.device)
+                self.stream.start()
+                dbg("mic stream opened")
+                return True
+            except Exception as e:  # noqa: BLE001
+                self.stream = None
+                emit({"event": "error", "message": f"microphone unavailable: {e}"})
+                return False
 
-        loop_thread = threading.Thread(target=run_loopback, daemon=True)
-        loop_thread.start()
+    def maybe_close_stream(self):
+        with self.stream_lock:
+            if self.stream is not None and not self.listening and not self.meeting:
+                if self.stream != "feed":
+                    try:
+                        self.stream.stop()
+                        self.stream.close()
+                    except Exception:
+                        pass
+                self.stream = None
+                dbg("mic stream closed")
 
-    start_stdin_watcher()
-    emit({"event": "ready", "device": device_name})
+    # ---------- whisper helper ----------
+    def transcribe(self, audio):
+        if self.wm is None:
+            return ""
+        segments, _info = self.wm.transcribe(audio, language=None,
+                                             vad_filter=True, beam_size=1)
+        return " ".join(s.text.strip() for s in segments).strip()
 
-    agc = make_agc()
-    utter = bytearray()             # boosted PCM of the current utterance
-    vosk_texts = []                 # vosk segment texts (fallback if whisper fails)
-    heard_any = False
-    last_voice = time.monotonic()
-    noise_floor = 300.0             # adaptive RMS noise floor
-    PRE_ROLL = sample_rate * 2 * 3  # keep 3s of audio from before speech starts
-    MAX_UTTER = sample_rate * 2 * 90
+    # ---------- command listening ----------
+    def start_listening(self):
+        if self.listening:
+            return
+        while not self.cmd_q.empty():
+            try:
+                self.cmd_q.get_nowait()
+            except queue.Empty:
+                break
+        self.cmd_agc = AutoGain()
+        self.listening = True
+        if not self.ensure_stream():
+            self.listening = False
+            emit({"event": "cancelled"})
+            return
+        emit({"event": "listening", "device": self.device_name})
 
-    def finalize_utterance():
-        nonlocal rec, utter, vosk_texts, heard_any
+    def stop_listening(self, cancelled):
+        was = self.listening
+        self.listening = False
+        self.listen_gen += 1           # suppresses a final still being transcribed
+        self.maybe_close_stream()
+        if was and cancelled:
+            emit({"event": "cancelled"})
+
+    def command_worker(self):
+        np = self.np
+        rec = self.vosk.KaldiRecognizer(self.vmodel, SAMPLE_RATE)
+        rec.SetWords(False)
+        utter = bytearray()
+        texts = []
+        heard = False
+        last_voice = time.monotonic()
+        PRE_ROLL = SAMPLE_RATE * 2 * 2
+        MAX_UTTER = SAMPLE_RATE * 2 * 30      # 30s cap for a spoken command
+        was_listening = False
+
+        def reset():
+            nonlocal rec, utter, texts, heard
+            rec = self.vosk.KaldiRecognizer(self.vmodel, SAMPLE_RATE)
+            rec.SetWords(False)
+            utter = bytearray()
+            texts = []
+            heard = False
+
+        while not self.stop_all.is_set():
+            if not self.listening:
+                if was_listening:
+                    reset()
+                    was_listening = False
+                time.sleep(0.05)
+                continue
+            was_listening = True
+            try:
+                raw = self.cmd_q.get(timeout=0.2)
+            except queue.Empty:
+                if heard and (time.monotonic() - last_voice) * 1000 >= self.args.silence_ms:
+                    self._finalize(rec, utter, texts)
+                    reset()
+                continue
+
+            b, arr = self.cmd_agc.apply(np, raw)
+            now = time.monotonic()
+            utter.extend(b)
+            if not heard and len(utter) > PRE_ROLL:
+                utter = bytearray(utter[-PRE_ROLL:])   # rolling pre-speech buffer
+
+            # adaptive energy detector on RAW audio. The floor is learned across
+            # utterances; it only adapts DOWNWARD-or-slowly so sustained soft speech
+            # can't drag it up over itself.
+            rms = float(np.sqrt(np.mean(arr * arr))) if arr.size else 0.0
+            if rms < self.noise_floor * 1.5:
+                self.noise_floor = self.noise_floor * 0.97 + rms * 0.03
+            elif not heard:
+                self.noise_floor = self.noise_floor * 0.995 + rms * 0.005
+            if rms > max(120.0, self.noise_floor * 3.5):
+                heard = True
+                last_voice = now
+
+            if rec.AcceptWaveform(b):
+                txt = json.loads(rec.Result()).get("text", "")
+                if txt:
+                    texts.append(txt)
+                    heard = True
+                    last_voice = now
+                    emit({"event": "partial", "text": " ".join(texts)})
+            else:
+                partial = json.loads(rec.PartialResult()).get("partial", "")
+                if partial:
+                    heard = True
+                    last_voice = now
+                    emit({"event": "partial", "text": " ".join(texts + [partial]).strip()})
+
+            if heard and ((now - last_voice) * 1000 >= self.args.silence_ms
+                          or len(utter) >= MAX_UTTER):
+                self._finalize(rec, utter, texts)
+                reset()
+
+    def _finalize(self, rec, utter, texts):
+        """Produce the final command text (whisper preferred, vosk as fallback)."""
+        np = self.np
+        gen = self.listen_gen          # a cancel during transcription bumps this
         tail = json.loads(rec.FinalResult()).get("text", "")
         if tail:
-            vosk_texts.append(tail)
+            texts = texts + [tail]
         text = ""
-        if use_whisper_command and len(utter) > sample_rate:  # >0.5s
+        if self.wm is not None and len(utter) > SAMPLE_RATE:      # >0.5s of audio
+            emit({"event": "transcribing"})
+            self.cmd_priority.set()                                # outrank meeting chunks
             try:
-                emit({"event": "status", "message": "transcribing"})
-                audio = np.frombuffer(bytes(utter), dtype=np.int16).astype(np.float32) / 32768.0
-                segments, info = wm.transcribe(audio, language=None,
-                                               vad_filter=True, beam_size=1)
-                text = " ".join(s.text.strip() for s in segments).strip()
-                dbg(f"whisper final: {text!r}")
+                with self.whisper_lock:
+                    audio = np.frombuffer(bytes(utter), dtype=np.int16).astype(np.float32) / 32768.0
+                    text = self.transcribe(audio)
+                dbg(f"whisper command: {text!r}")
             except Exception as e:  # noqa: BLE001
                 emit({"event": "status", "message": f"whisper failed, using vosk: {e}"})
+            finally:
+                self.cmd_priority.clear()
+        if self.listen_gen != gen:
+            dbg("final suppressed: cancelled during transcription")
+            return
         if not text:
-            text = " ".join(t for t in vosk_texts if t).strip()
-        if args.meeting:
-            tlog("you", text)
-        elif text:
+            text = " ".join(t for t in texts if t).strip()
+        self.listening = False
+        self.maybe_close_stream()
+        if text:
             emit({"event": "final", "text": text})
-        rec = vosk.KaldiRecognizer(model, sample_rate)
-        utter = bytearray()
-        vosk_texts = []
-        heard_any = False
-
-    while not stop_event.is_set():
-        try:
-            data = audio_q.get(timeout=0.25)
-        except queue.Empty:
-            continue
-        b, arr = boost(data, agc)
-        now = time.monotonic()
-        utter.extend(b)
-        if not heard_any and len(utter) > PRE_ROLL:
-            utter = utter[-PRE_ROLL:]           # rolling pre-roll while waiting for speech
-
-        # adaptive energy detector: catches soft speech vosk misses
-        rms = float(np.sqrt(np.mean(arr * arr))) if arr.size else 0.0
-        if rms < noise_floor * 2:
-            noise_floor = noise_floor * 0.98 + rms * 0.02
-        if rms > max(600.0, noise_floor * 3):
-            heard_any = True
-            last_voice = now
-
-        if rec.AcceptWaveform(b):
-            txt = json.loads(rec.Result()).get("text", "")
-            if txt:
-                vosk_texts.append(txt)
-                heard_any = True
-                last_voice = now
-                if not args.meeting:
-                    emit({"event": "partial", "text": " ".join(vosk_texts)})
         else:
-            partial = json.loads(rec.PartialResult()).get("partial", "")
-            if partial:
-                heard_any = True
-                last_voice = now
-                if not args.meeting:
-                    emit({"event": "partial",
-                          "text": " ".join(vosk_texts + [partial]).strip()})
+            emit({"event": "cancelled"})
 
-        if heard_any and ((now - last_voice) * 1000 >= args.silence_ms
-                          or len(utter) >= MAX_UTTER):
-            finalize_utterance()
+    # ---------- meeting capture ----------
+    def push_audio(self, tag, pcm_bytes):
+        with self.buf_lock:
+            if not self.bufs[tag]:
+                self.buf_start[tag] = time.monotonic() - self.meeting_t0
+            self.bufs[tag].extend(pcm_bytes)
+            if len(self.bufs[tag]) >= self.args.chunk_sec * SAMPLE_RATE * 2:
+                self._enqueue(tag, self.buf_start[tag], bytes(self.bufs[tag]))
+                self.bufs[tag] = bytearray()
 
-    # graceful shutdown: flush whatever was in flight
+    def flush_bufs(self):
+        with self.buf_lock:
+            for tag in ("you", "them"):
+                if self.bufs[tag]:
+                    self._enqueue(tag, self.buf_start[tag], bytes(self.bufs[tag]))
+                    self.bufs[tag] = bytearray()
+
+    def _enqueue(self, tag, started, pcm):
+        # pending is incremented BEFORE the job is visible to the worker, so
+        # "queue empty and pending==0" really means everything is written out
+        with self.pending_lock:
+            self.pending += 1
+        self.jobs.put((self.meeting_gen, tag, started, pcm))
+
+    def meeting_worker(self):
+        np = self.np
+        while not self.stop_all.is_set():
+            try:
+                job = self.jobs.get(timeout=0.3)
+            except queue.Empty:
+                continue
+            if job is None:
+                continue
+            gen, tag, started, pcm = job
+            try:
+                if gen not in self.gen_fh:
+                    continue           # straggler from a closed meeting: drop it
+                while self.cmd_priority.is_set():   # let a spoken command jump ahead
+                    time.sleep(0.05)
+                audio = np.frombuffer(pcm, dtype=np.int16).astype(np.float32) / 32768.0
+                dbg(f"job {tag} {audio.size/SAMPLE_RATE:.1f}s peak={float(np.abs(audio).max()):.4f}")
+                if audio.size < SAMPLE_RATE // 2 or np.abs(audio).max() < 0.004:
+                    continue
+                with self.whisper_lock:
+                    text = self.transcribe(audio)
+                if text:
+                    self.tlog(gen, f"{tag} +{fmt_elapsed(started)}", text)
+            except Exception as e:  # noqa: BLE001
+                emit({"event": "error", "message": f"transcribe chunk failed: {e}"})
+            finally:
+                with self.pending_lock:
+                    self.pending -= 1
+
+    def loopback_worker(self):
+        np = self.np
+        try:
+            import soundcard as sc
+        except Exception as e:  # noqa: BLE001
+            emit({"event": "error",
+                  "message": f"loopback unavailable, meeting notes use mic only: {e}"})
+            return
+        last_err = 0.0
+        while not self.loop_stop.is_set() and not self.stop_all.is_set():
+            try:
+                spk = sc.default_speaker()
+                loop_mic = sc.get_microphone(id=str(spk.name), include_loopback=True)
+                with loop_mic.recorder(samplerate=SAMPLE_RATE, channels=1, blocksize=4000) as lr:
+                    last_dev_check = time.monotonic()
+                    while not self.loop_stop.is_set() and not self.stop_all.is_set():
+                        data = lr.record(numframes=None)
+                        if data is not None and len(data):
+                            d = data if data.ndim == 1 else data[:, 0]
+                            pcm = (np.clip(d, -1, 1) * 32767).astype(np.int16).tobytes()
+                            self.push_audio("them", pcm)
+                        else:
+                            self.loop_stop.wait(0.05)
+                        if time.monotonic() - last_dev_check > 5:
+                            last_dev_check = time.monotonic()
+                            try:
+                                if sc.default_speaker().name != spk.name:
+                                    break     # follow headset/speaker switches
+                            except Exception:
+                                break
+            except Exception as e:  # noqa: BLE001
+                if time.monotonic() - last_err > 30:
+                    last_err = time.monotonic()
+                    emit({"event": "error", "message": f"loopback hiccup, retrying: {e}"})
+                self.loop_stop.wait(1.0)
+
+    def start_meeting(self, path):
+        if self.meeting:
+            return
+        try:
+            d = os.path.dirname(path)
+            if d:
+                os.makedirs(d, exist_ok=True)
+            fh = open(path, "a", encoding="utf-8")
+        except Exception as e:  # noqa: BLE001
+            emit({"event": "error", "message": f"cannot open transcript: {e}"})
+            return
+        self.meeting_gen += 1
+        self.gen_fh[self.meeting_gen] = fh
+        with self.transcript_lock:
+            fh.write(f"\n--- capture started {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+            fh.flush()
+        self.meeting_t0 = time.monotonic()
+        self.you_agc = AutoGain()
+        self.meeting = True
+        if not self.ensure_stream():
+            self.meeting = False
+            self.gen_fh.pop(self.meeting_gen, None)
+            try:
+                fh.close()
+            except Exception:
+                pass
+            emit({"event": "error", "message": "meeting capture could not start (no microphone)"})
+            return
+        self.loop_stop.clear()
+        self.loop_thread = threading.Thread(target=self.loopback_worker, daemon=True)
+        self.loop_thread.start()
+        emit({"event": "meeting-started", "transcript": path})
+
+    def stop_meeting(self):
+        if not self.meeting:
+            return
+        gen = self.meeting_gen
+        self.meeting = False
+        self.loop_stop.set()
+        if self.loop_thread:
+            self.loop_thread.join(timeout=3.0)
+            self.loop_thread = None
+        self.maybe_close_stream()
+        self.flush_bufs()
+        emit({"event": "status", "message": "finishing transcription…"})
+        # finish asynchronously so stdin commands (listen/quit) stay responsive
+        threading.Thread(target=self._finish_stop, args=(gen,), daemon=True).start()
+
+    def _finish_stop(self, gen):
+        deadline = time.monotonic() + 300
+        while time.monotonic() < deadline and not self.stop_all.is_set():
+            with self.pending_lock:
+                busy = self.pending
+            if self.jobs.empty() and busy == 0:
+                break
+            time.sleep(0.2)
+        fh = self.gen_fh.pop(gen, None)   # after pop, stragglers are dropped by gen check
+        if fh:
+            with self.transcript_lock:
+                try:
+                    fh.write(f"--- capture ended {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+                    fh.close()
+                except Exception:
+                    pass
+        emit({"event": "meeting-stopped"})
+
+    # ---------- main loop ----------
+    def run(self):
+        self.load()
+        threading.Thread(target=self.command_worker, daemon=True).start()
+        threading.Thread(target=self.meeting_worker, daemon=True).start()
+        emit({"event": "daemon-ready", "device": self.device_name})
+        dbg("daemon ready")
+
+        buf = b""
+        while True:
+            try:
+                data = os.read(0, 4096)     # raw read: no TextIOWrapper lock
+            except Exception:
+                break
+            if not data:
+                break
+            buf += data
+            while b"\n" in buf:
+                line, buf = buf.split(b"\n", 1)
+                cmd = line.decode("utf-8", "replace").strip().lower()
+                if not cmd:
+                    continue
+                dbg(f"cmd: {cmd}")
+                if cmd == "listen":
+                    self.start_listening()
+                elif cmd == "cancel":
+                    self.stop_listening(cancelled=True)
+                elif cmd.startswith("meeting-stop"):
+                    self.stop_meeting()
+                elif cmd.startswith("meeting "):
+                    self.start_meeting(line.decode("utf-8", "replace").strip()[8:].strip())
+                elif cmd == "quit":
+                    self.shutdown()
+                    return
+        self.shutdown()
+
+    def shutdown(self):
+        self.listening = False
+        if self.meeting:
+            self.stop_meeting()
+        # give in-flight transcript flushes a moment (a hard kill may follow anyway;
+        # committed lines are already flushed line-by-line)
+        deadline = time.monotonic() + 8
+        while self.gen_fh and time.monotonic() < deadline:
+            time.sleep(0.2)
+        self.stop_all.set()
+        self.maybe_close_stream()
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--model", required=True, help="path to vosk model dir")
+    ap.add_argument("--silence-ms", type=int, default=1800)
+    ap.add_argument("--engine", choices=["whisper", "vosk"], default="whisper")
+    ap.add_argument("--whisper-model", default="small")
+    ap.add_argument("--chunk-sec", type=int, default=20)
+    ap.add_argument("--input-device", default=None)
+    ap.add_argument("--test-feed", default=None,
+                    help="diagnostics: play a 16-bit mono WAV into the pipeline "
+                         "instead of opening the microphone")
+    args = ap.parse_args()
     try:
-        stream.stop()
-    except Exception:
+        Ear(args).run()
+    except KeyboardInterrupt:
         pass
-    try:
-        if heard_any or len(utter) > sample_rate:
-            finalize_utterance()
-    except Exception:
-        pass
-    if loop_thread:
-        loop_thread.join(timeout=2.0)
-    if transcript_fh:
-        with transcript_lock:
-            transcript_fh.write(
-                f"--- capture ended {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
-            transcript_fh.close()
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        pass
+    main()

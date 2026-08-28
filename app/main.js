@@ -1,6 +1,6 @@
-// Momo — main process: window, ears (python STT), brain (claude headless), voice (SAPI TTS)
-const { app, BrowserWindow, ipcMain, screen } = require('electron');
-const { spawn } = require('child_process');
+// Momo — main process: window, ear daemon (python STT), brain (claude headless), voice (SAPI TTS)
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, Tray, Menu, nativeImage } = require('electron');
+const { spawn, execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -21,26 +21,43 @@ function loadConfig() {
 }
 let config = loadConfig();
 
+// ---------- profile (who the user is + which character runs) ----------
+function loadProfile() {
+  try { return JSON.parse(fs.readFileSync(path.join(DATA, 'profile.json'), 'utf8')); }
+  catch (e) { return {}; }
+}
+const profile = loadProfile();
+const CHAR = profile.character === 'toto' ? 'toto' : 'momo';
+const CHAR_NAME = profile.assistantName || (CHAR === 'toto' ? 'Toto' : 'Momo');
+
 // ---------- state ----------
 let win = null;
-let earProc = null;          // command-mode listener
-let meetingProc = null;      // meeting-mode listener
+let ear = null;               // persistent python listening daemon
+let earReady = false;
+let earRestarts = 0;
+let listening = false;
+let listenPending = false;    // 'listen' sent, 'listening' event not yet back
+let capturing = false;        // meeting capture running
+let meetingStarting = false;  // 'meeting' sent, 'meeting-started' not yet back
 let meetingTranscript = null;
-let meetingAutoStarted = false;   // was capture started by auto-detection?
-let meetingStopping = false;      // stopMeeting() initiated this shutdown
-let meetingSuppressed = false;    // user stopped capture during an ongoing call
+let meetingAutoStarted = false;
+let meetingStopping = false;
+let meetingSuppressed = false;
 let meetingFreeChecks = 0;
 let suppressFreeChecks = 0;
 let micCheckInFlight = false;
 let lastMicInUse = false;
 let agentBusy = false;
-let pendingJobs = [];             // queued runAgent jobs (never drop meeting notes)
+let pendingJobs = [];
+let agentCooldownUntil = 0;   // set when the Claude usage limit is hit
+let cooldownTimer = null;
 let ttsProc = null;
 let sessionId = null;
 let sessionLast = 0;
 let lastBriefDate = null;
 let quitting = false;
 let state = 'idle';
+let tray = null;
 
 function send(ch, payload) { if (win && !win.isDestroyed()) win.webContents.send(ch, payload); }
 function setState(s) { state = s; send('momo:state', s); }
@@ -63,14 +80,39 @@ function createWindow() {
   win.setAlwaysOnTop(true, 'screen-saver');
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.webContents.on('did-finish-load', () => {
-    win.webContents.setZoomFactor(scale);   // always set: zoom persists per-host otherwise
+    win.webContents.setZoomFactor(scale);
+    send('momo:profile', { character: CHAR, name: CHAR_NAME });
   });
   win.once('ready-to-show', () => {
-    setTimeout(() => speak("Hi, I'm Momo! Tap the mic whenever you need me."), 800);
+    setTimeout(() => speak("Hi, I'm " + CHAR_NAME + "! Tap the mic whenever you need me."), 800);
   });
 }
 
-// ---------- TTS (Windows SAPI via PowerShell; prefers en-IN female voice) ----------
+// ---------- show / hide (global hotkey + tray; hiding never quits) ----------
+function ensureVisible() {
+  if (win && !win.isDestroyed() && !win.isVisible()) {
+    win.show();
+    win.setAlwaysOnTop(true, 'screen-saver');
+  }
+}
+function hideMomo() {
+  if (!win || win.isDestroyed()) return;
+  stopSpeaking();
+  cancelListening();
+  if (state !== 'meeting') setState(capturing ? 'meeting' : 'idle');
+  win.hide();          // background work (meetings, reminders, brief) keeps running
+}
+function showMomo(listen) {
+  if (!win || win.isDestroyed()) return;
+  ensureVisible();
+  if (listen && !capturing) startListening();   // summoned = ready to hear you
+}
+function toggleMomo() {
+  if (win && win.isVisible()) hideMomo();
+  else showMomo(true);
+}
+
+// ---------- TTS: Microsoft neural voice (edge-tts, warm & bilingual) with offline SAPI fallback ----------
 function speak(text, onDone) {
   const clean = String(text)
     .replace(/```[\s\S]*?```/g, ' ')
@@ -79,11 +121,11 @@ function speak(text, onDone) {
     .replace(/https?:\S+/g, ' a link ')
     .replace(/\s+/g, ' ').trim();
   if (!clean) { if (onDone) onDone(); return; }
-  // Stay silent out loud when her voice could reach a call (capture running, or the
-  // mic is in use by a meeting app) or be picked up by her own open ear.
-  if (meetingProc || lastMicInUse || earProc) {
+  ensureVisible();   // she may be hidden when a reminder or reply arrives
+  // Stay silent out loud when her voice could reach a call or her own open mic.
+  if (capturing || meetingStarting || lastMicInUse || listening || listenPending) {
     bubble(clean, true);
-    if (meetingProc) setState('meeting');
+    if (capturing) setState('meeting');
     else if (state === 'thinking' || state === 'speaking') setState('idle');
     if (onDone) onDone();
     return;
@@ -91,6 +133,67 @@ function speak(text, onDone) {
   stopSpeaking();
   setState('speaking');
   bubble(clean, true);
+  if ((config.tts.engine || 'edge') === 'edge') speakEdge(clean, onDone);
+  else speakSapi(clean, onDone);
+}
+function ttsFinish(p, onDone) {
+  return () => {
+    if (ttsProc !== p) return;              // a newer utterance took over
+    ttsProc = null;
+    if (state === 'speaking') setState(capturing ? 'meeting' : 'idle');
+    if (onDone) onDone();
+  };
+}
+function speakEdge(clean, onDone) {
+  const mp3 = path.join(os.tmpdir(), 'momo-tts-' + Date.now() + '.mp3');
+  const b64 = Buffer.from(clean, 'utf8').toString('base64');
+  // Route by language: a Hindi voice reads digits/dates in Hindi even inside
+  // English sentences ("14" -> chaudah), which sounds wrong. English replies get
+  // the Indian-English voice; only Devanagari replies get the Hindi voice.
+  const isHindi = /[ऀ-ॿ]/.test(clean);
+  // per-character defaults: Momo = female voices, Toto = male voices
+  const defEn = CHAR === 'toto' ? 'en-IN-PrabhatNeural' : 'en-IN-NeerjaNeural';
+  const defHi = CHAR === 'toto' ? 'hi-IN-MadhurNeural' : 'hi-IN-SwaraNeural';
+  const voice = config.tts.edgeVoice ||
+    (isHindi ? (config.tts.edgeVoiceHindi || defHi)
+             : (config.tts.edgeVoiceEnglish || defEn));
+  const p1 = spawn(PYTHON_EXE, [path.join(PROJECT, 'python', 'momo_voice.py'),
+    '--voice', voice,
+    '--rate', config.tts.edgeRate || '+0%',
+    '--out', mp3, '--text-b64', b64],
+    { windowsHide: true, env: Object.assign({}, process.env, { PYTHONUTF8: '1' }) });
+  ttsProc = p1;
+  const t1 = setTimeout(() => { try { p1.kill(); } catch (e) {} }, 25000);
+  p1.on('exit', code => {
+    clearTimeout(t1);
+    if (ttsProc !== p1) { try { fs.unlinkSync(mp3); } catch (e) {} return; }   // cancelled
+    if (code !== 0 || !fs.existsSync(mp3)) {
+      log('edge-tts failed, falling back to offline voice');
+      speakSapi(clean, onDone);            // reassigns ttsProc itself
+      return;
+    }
+    const ps = [
+      'Add-Type -AssemblyName PresentationCore;',
+      '$p = New-Object System.Windows.Media.MediaPlayer;',
+      "$p.Open([uri]('file:///' + '" + mp3.replace(/\\/g, '/') + "'));",
+      '$p.Play(); $t = 0;',
+      'while (-not $p.NaturalDuration.HasTimeSpan -and $t -lt 100) { Start-Sleep -Milliseconds 100; $t++ };',
+      'if ($p.NaturalDuration.HasTimeSpan) { Start-Sleep -Milliseconds ([int]$p.NaturalDuration.TimeSpan.TotalMilliseconds + 300) };',
+      '$p.Close()'
+    ].join(' ');
+    const p2 = spawn('powershell.exe', ['-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-Command', ps], { windowsHide: true });
+    ttsProc = p2;
+    const done = ttsFinish(p2, onDone);
+    p2.on('exit', () => { try { fs.unlinkSync(mp3); } catch (e) {} done(); });
+    p2.on('error', e => { log('tts play error', e.message); done(); });
+  });
+  p1.on('error', e => {
+    clearTimeout(t1);
+    log('edge-tts spawn error', e.message);
+    if (ttsProc === p1) speakSapi(clean, onDone);
+  });
+}
+function speakSapi(clean, onDone) {
   const b64 = Buffer.from(clean, 'utf8').toString('base64');
   const prefs = (config.tts.preferredVoices || []).map(v => "'" + v + "'").join(',');
   const ps = [
@@ -104,160 +207,212 @@ function speak(text, onDone) {
   ].join(' ');
   const p = spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], { windowsHide: true });
   ttsProc = p;
-  const finish = () => {
-    if (ttsProc !== p) return;          // a newer utterance took over
-    ttsProc = null;
-    if (state === 'speaking') setState(meetingProc ? 'meeting' : 'idle');
-    if (onDone) onDone();
-  };
-  p.on('exit', finish);
-  p.on('error', e => { log('tts error', e.message); finish(); });
+  const done = ttsFinish(p, onDone);
+  p.on('exit', done);
+  p.on('error', e => { log('tts error', e.message); done(); });
 }
 function stopSpeaking() {
   const p = ttsProc;
-  ttsProc = null;                        // null first: the old exit handler must not fire onDone
+  ttsProc = null;
   if (p) { try { p.kill(); } catch (e) {} }
 }
 
-// ---------- Ears (python STT) ----------
-function pyEnv() {
-  return Object.assign({}, process.env, { PYTHONUTF8: '1' });
+// ---------- Ear daemon ----------
+// Resolve the REAL python interpreter once: 'python' on Windows is often a
+// launcher shim whose extra process breaks stdin control and orphans the
+// daemon when killed.
+let PYTHON_EXE = 'python';
+try {
+  const real = execSync('python -c "import sys; print(sys.executable)"',
+    { windowsHide: true, timeout: 15000 }).toString().trim();
+  if (real && fs.existsSync(real)) PYTHON_EXE = real;
+} catch (e) { /* fall back to 'python' */ }
+
+function earSend(cmd) {
+  if (!ear || !ear.stdin.writable) return false;
+  try { ear.stdin.write(cmd + '\n'); return true; } catch (e) { return false; }
 }
-function pyArgs(extra) {
-  return [path.join(PROJECT, 'python', 'momo_ear.py'),
-    '--model', config.stt.modelDir, '--silence-ms', String(config.stt.silenceMs)].concat(extra);
-}
-function startEar() {
-  if (earProc) return;
-  stopSpeaking();
-  // NOTE: starting the command ear DURING meeting capture is allowed on purpose —
-  // you can ask Momo something mid-call; Windows shares the mic between captures.
-  const p = spawn('python', pyArgs([]), { cwd: PROJECT, env: pyEnv(), windowsHide: true });
-  earProc = p;
-  setState('listening');
-  bubble('Listening…');
+function startEarDaemon() {
+  if (ear) return;
+  const args = [path.join(PROJECT, 'python', 'momo_ear.py'),
+    '--model', config.stt.modelDir,
+    '--silence-ms', String(config.stt.silenceMs || 1800),
+    '--engine', config.stt.commandEngine || 'whisper',
+    '--whisper-model', config.stt.whisperModel || 'small',
+    '--chunk-sec', String(config.stt.chunkSec || 30)];
+  if (config.stt.inputDevice) args.push('--input-device', config.stt.inputDevice);
+  const p = spawn(PYTHON_EXE, args, {
+    cwd: PROJECT, windowsHide: true,
+    env: Object.assign({}, process.env, { PYTHONUTF8: '1' })
+  });
+  ear = p;
+  earReady = false;
   let buf = '';
   p.stdout.on('data', d => {
-    if (earProc !== p) return;          // stale listener: ignore leftovers
+    if (ear !== p) return;
     buf += d.toString();
     let i;
     while ((i = buf.indexOf('\n')) >= 0) {
       const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
       if (!line) continue;
       let msg; try { msg = JSON.parse(line); } catch (e) { continue; }
-      if (msg.event === 'partial') send('momo:partial', msg.text);
-      else if (msg.event === 'final' && msg.text) { stopEar(); handleCommand(msg.text); return; }
-      else if (msg.event === 'error') {
-        stopEar();
-        setState(meetingProc ? 'meeting' : 'idle');
-        bubble('Mic problem: ' + msg.message, true);
-        log('ear error', msg.message);
-        return;
-      }
+      onEarEvent(msg);
     }
   });
   p.stderr.on('data', d => log('ear:', d.toString().trim()));
-  p.on('exit', () => {
-    if (earProc !== p) return;
-    earProc = null;
-    if (state === 'listening') setState(meetingProc ? 'meeting' : 'idle');
-  });
+  const earDied = (why) => {
+    if (ear !== p) return;
+    ear = null; earReady = false; listening = false; listenPending = false;
+    meetingStarting = false;
+    log('ear daemon gone:', why);
+    if (quitting) return;
+    if (capturing) {                        // crashed mid-meeting: salvage the notes
+      capturing = false;
+      send('momo:rec', false);
+      bubble('Note-taking stopped unexpectedly — writing up what I have.', true);
+      finishMeetingNotes();
+    } else if (state === 'listening') {
+      setState('idle');
+    }
+    const delay = Math.min(30000, 2000 * Math.pow(2, Math.min(earRestarts++, 4)));
+    setTimeout(startEarDaemon, delay);      // keep her ears alive
+  };
+  p.on('exit', code => earDied('exit ' + code));
   p.on('error', e => {
-    if (earProc !== p) return;
-    earProc = null;
-    setState(meetingProc ? 'meeting' : 'idle');
+    log('ear spawn error', e.message);
     bubble('Mic engine failed to start: ' + e.message, true);
+    // 'exit' usually follows for a started process; if it never comes (spawn
+    // failure), clean up ourselves after a beat
+    setTimeout(() => earDied('error ' + e.message), 2000);
   });
 }
-function stopEar() {
-  const p = earProc;
-  earProc = null;
-  if (p) { try { p.kill(); } catch (e) {} }
+function onEarEvent(msg) {
+  switch (msg.event) {
+    case 'daemon-ready':
+      earReady = true; earRestarts = 0;
+      log('ear ready, device:', msg.device);
+      break;
+    case 'listening':
+      listening = true;
+      listenPending = false;
+      setState('listening');
+      bubble('Listening…');
+      break;
+    case 'partial':
+      send('momo:partial', msg.text);
+      break;
+    case 'transcribing':
+      send('momo:partial', '');
+      bubble('Getting that…', true);
+      break;
+    case 'final':
+      if (!listening) break;       // this listen cycle was cancelled: don't act on it
+      listening = false;
+      listenPending = false;
+      if (msg.text) handleCommand(msg.text);
+      break;
+    case 'cancelled':
+      listening = false;
+      listenPending = false;
+      if (state === 'listening') setState(capturing ? 'meeting' : 'idle');
+      break;
+    case 'meeting-started':
+      meetingStarting = false;
+      capturing = true;
+      meetingTranscript = msg.transcript;
+      send('momo:rec', true);
+      setState('meeting');
+      if (meetingSuppressed) stopMeeting();   // user declined while it was starting
+      break;
+    case 'meeting-stopped':
+      capturing = false;
+      meetingStopping = false;
+      meetingAutoStarted = false;
+      send('momo:rec', false);
+      finishMeetingNotes();
+      break;
+    case 'status':
+      log('ear status:', msg.message);
+      break;
+    case 'error':
+      log('ear error:', msg.message);
+      bubble('Mic problem: ' + msg.message, true);
+      if (meetingStarting) {
+        // the capture never came up (no mic etc.) — don't let the watcher
+        // retry every tick for the rest of the call
+        meetingStarting = false;
+        meetingAutoStarted = false;
+        meetingSuppressed = true;
+        suppressFreeChecks = 0;
+      }
+      if (listenPending) { listenPending = false; if (state === 'listening') setState('idle'); }
+      break;
+  }
+}
+function earCommand(cmd) {
+  if (earSend(cmd)) return true;
+  earReady = false;
+  bubble('My ears just hiccuped — restarting them…', true);
+  startEarDaemon();
+  return false;
+}
+function startListening() {
+  if (listening || listenPending) return;
+  if (!earReady) { bubble('My ears are still waking up — one second…', true); startEarDaemon(); return; }
+  stopSpeaking();
+  listenPending = true;
+  if (!earCommand('listen')) listenPending = false;
+}
+function cancelListening() {
+  if (!listening && !listenPending) return;
+  listening = false;
+  listenPending = false;
+  earCommand('cancel');
 }
 
 // ---------- Meeting capture ----------
 function startMeeting(auto) {
-  if (meetingProc) return;
-  stopSpeaking();          // never let an in-flight utterance play into the call
-  stopEar();
+  if (capturing || meetingStarting || !earReady) { if (!earReady) startEarDaemon(); return; }
+  stopSpeaking();               // never let an in-flight utterance play into the call
+  cancelListening();
   const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 16);
-  meetingTranscript = path.join(DATA, 'transcripts', 'meeting-' + stamp + '.txt');
-  const extra = ['--meeting', '--transcript', meetingTranscript,
-    '--engine', config.stt.meetingEngine || 'whisper',
-    '--whisper-model', config.stt.whisperModel || 'small',
-    '--chunk-sec', String(config.stt.chunkSec || 45)];
-  const p = spawn('python', pyArgs(extra), { cwd: PROJECT, env: pyEnv(), windowsHide: true });
-  meetingProc = p;
-  p.stderr.on('data', d => log('meeting-ear:', d.toString().trim()));
-  let mbuf = '';
-  p.stdout.on('data', d => {
-    if (meetingProc !== p) return;
-    mbuf += d.toString();
-    let i;
-    while ((i = mbuf.indexOf('\n')) >= 0) {
-      const line = mbuf.slice(0, i).trim(); mbuf = mbuf.slice(i + 1);
-      if (!line) continue;
-      log('meeting-ear:', line);
-      let msg; try { msg = JSON.parse(line); } catch (e) { continue; }
-      if (msg.event === 'error') bubble('Note-taking problem: ' + msg.message, true);
-    }
-  });
-  let ended = false;
-  const onEnd = (spawnFailMsg) => {
-    if (ended) return; ended = true;
-    if (meetingProc === p) meetingProc = null;
-    meetingAutoStarted = false;
-    const expected = meetingStopping;
-    meetingStopping = false;
-    send('momo:rec', false);
-    if (quitting) return;
-    if (spawnFailMsg) {                 // never even started: no notes to write
-      setState(earProc ? state : 'idle');
-      bubble(spawnFailMsg, true);
-      return;
-    }
-    if (!expected) bubble('Meeting capture stopped unexpectedly — writing up what I have.', true);
-    finishMeetingNotes();
-  };
-  p.on('exit', () => onEnd());
-  p.on('error', e => { log('meeting-ear spawn error', e.message); onEnd('Could not start the note-taker (is python installed?).'); });
+  const file = path.join(DATA, 'transcripts', 'meeting-' + stamp + '.txt');
   meetingAutoStarted = !!auto;
-  setState('meeting');
-  send('momo:rec', true);
-  if (auto) {
-    bubble('Meeting detected — taking notes quietly.', true);   // no voice: she is silent during calls
-  } else {
-    speak('Taking meeting notes from now.');
-  }
+  meetingStarting = true;
+  if (!earCommand('meeting ' + file)) { meetingStarting = false; return; }
+  ensureVisible();   // the REC badge must be seen while notes are being taken
+  if (auto) bubble('Meeting detected — taking notes quietly.', true);
+  else speak('Taking meeting notes from now.');
 }
 function stopMeeting() {
-  if (!meetingProc || meetingStopping) return;
+  if (meetingStopping) return;
+  if (!capturing) {
+    // a start may still be in flight; meeting-started will see meetingSuppressed
+    // and stop it — nothing to send yet
+    return;
+  }
   meetingStopping = true;
   setState('thinking');
   bubble('Meeting ended — finishing the transcript…', true);
-  const p = meetingProc;
-  // graceful stop: the ear transcribes all buffered audio and writes an end marker
-  // (whisper may need a couple of minutes for the final chunks)
-  try { p.stdin.write('stop\n'); } catch (e) { try { p.kill(); } catch (e2) {} }
-  setTimeout(() => { try { p.kill(); } catch (e) {} }, 300000);   // fallback
+  earCommand('meeting-stop');
 }
 function finishMeetingNotes() {
   const t = meetingTranscript;
   meetingTranscript = null;
+  meetingStopping = false;
   const empty = !t || !fs.existsSync(t) || fs.statSync(t).size < 200;
   if (empty) {
-    if (!earProc) setState('idle');
+    if (!listening) setState('idle');
     bubble('Meeting ended — nothing much was said, so no notes this time.');
     return;
   }
   setState('thinking');
   bubble('Writing up your meeting notes…', true);
-  // speak() itself decides voice vs bubble (live call, open ear) and restores state
   runAgent('[MEETING-NOTES] The meeting just ended. Transcript file: ' + t + '. Follow knowledge/meeting-notes.md.',
     { fresh: true, queue: true }, reply => speak(reply));
 }
 
-// ---------- Auto meeting detection (Windows tracks when Teams uses the mic) ----------
+// ---------- Auto meeting detection ----------
 function checkMeetingMic(cb) {
   const rx = (config.meeting.apps || ['teams']).join('|');
   const ps = [
@@ -271,8 +426,7 @@ function checkMeetingMic(cb) {
     "if ($inuse) { 'IN_USE' } else { 'FREE' }"
   ].join(' ');
   const proc = spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], { windowsHide: true });
-  let out = '';
-  let settled = false;
+  let out = '', settled = false;
   const settle = v => { if (!settled) { settled = true; cb(v); } };
   proc.stdout.on('data', d => out += d);
   proc.on('exit', () => settle(out.indexOf('IN_USE') >= 0));
@@ -288,17 +442,15 @@ function meetingWatchTick() {
     if (inUse) {
       meetingFreeChecks = 0;
       suppressFreeChecks = 0;
-      if (!meetingProc && !meetingStopping && !meetingSuppressed) startMeeting(true);
+      if (!capturing && !meetingStarting && !meetingStopping && !meetingSuppressed) startMeeting(true);
     } else {
-      // re-arm suppression only after the call has been over for a while (readings flap)
       if (meetingSuppressed) {
         suppressFreeChecks++;
         if (suppressFreeChecks >= (config.meeting.endAfterChecks || 2)) {
-          meetingSuppressed = false;
-          suppressFreeChecks = 0;
+          meetingSuppressed = false; suppressFreeChecks = 0;
         }
       }
-      if (meetingProc && meetingAutoStarted && !meetingStopping) {
+      if (capturing && meetingAutoStarted && !meetingStopping) {
         meetingFreeChecks++;
         if (meetingFreeChecks >= (config.meeting.endAfterChecks || 2)) {
           meetingFreeChecks = 0;
@@ -318,8 +470,24 @@ function drainJobs() {
     runAgent(j.prompt, j.opts, j.cb);
   }
 }
+function scheduleCooldownDrain() {
+  if (cooldownTimer) return;
+  cooldownTimer = setTimeout(() => {
+    cooldownTimer = null;
+    drainJobs();
+  }, Math.max(1000, agentCooldownUntil - Date.now() + 1000));
+}
 function runAgent(prompt, opts, cb) {
   opts = opts || {};
+  if (Date.now() < agentCooldownUntil) {
+    // usage limit hit earlier: don't burn attempts; queue important work for later
+    if (opts.queue) { pendingJobs.push({ prompt, opts, cb }); scheduleCooldownDrain(); return; }
+    if (!opts.background) {
+      const mins = Math.ceil((agentCooldownUntil - Date.now()) / 60000);
+      speak('My thinking limit is reached for now — I should be back in about ' + mins + ' minutes.');
+    }
+    return;
+  }
   if (agentBusy) {
     if (opts.queue) {
       pendingJobs.push({ prompt, opts, cb });
@@ -340,7 +508,8 @@ function runAgent(prompt, opts, cb) {
   const idleMs = (config.agent.sessionIdleResetMinutes || 30) * 60000;
   const resume = !opts.fresh && sessionId && (Date.now() - sessionLast) < idleMs;
   const args = ['-p', prompt, '--output-format', 'json', '--dangerously-skip-permissions'];
-  if (config.agent.model) args.push('--model', config.agent.model);
+  const model = opts.model || config.agent.model;   // per-task routing (heartbeats run cheap)
+  if (model) args.push('--model', model);
   if (resume) args.push('--resume', sessionId);
   if (config.agent.useMcp) args.push('--mcp-config', path.join(PROJECT, 'momo.mcp.json'));
 
@@ -366,13 +535,22 @@ function runAgent(prompt, opts, cb) {
     let reply = null;
     try {
       const j = JSON.parse(out);
-      reply = j.result ? String(j.result).trim() : null;   // empty result = failure
+      reply = j.result ? String(j.result).trim() : null;
       if (!opts.background) { sessionId = j.session_id || sessionId; sessionLast = Date.now(); }
     } catch (e) {
       log('agent parse fail. code=', code, 'err=', err.slice(0, 500), 'out=', out.slice(0, 500));
     }
     if (!reply) {
-      // speak() manages state itself; background failures stay silent and untouched
+      // usage limit? degrade gracefully instead of dying silently
+      const blob = (out + ' ' + err).toLowerCase();
+      if (/usage limit|rate.?limit|overloaded|credit balance|insufficient credit/.test(blob)) {
+        agentCooldownUntil = Date.now() + 30 * 60000;   // hold off for 30 min
+        scheduleCooldownDrain();
+        log('usage limit hit — cooling down until', new Date(agentCooldownUntil).toString());
+        if (!opts.background) speak('I have used up my thinking limit for now. I will finish pending work as soon as it resets — around half an hour.');
+        else bubble('Thinking limit reached — background checks paused for a while.', true);
+        return;
+      }
       if (!opts.background) speak('Sorry, I hit a problem with that one. Check my log for details.');
       return;
     }
@@ -384,21 +562,21 @@ function handleCommand(text) {
   send('momo:partial', '');
   bubble('“' + text + '”', true);
   setState('thinking');
-  // queue:true — a command spoken while another task runs is done next, never dropped
   runAgent(text, { queue: true }, reply => {
     speak(reply, () => {
-      // If Momo asked a question, reopen the mic so the user can just answer.
-      if (/\?\s*$/.test(reply) && !meetingProc) startEar();
+      // If Momo asked a question, reopen the mic so the user can just answer —
+      // but never during a live call (the call's audio would become a command).
+      if (/\?\s*$/.test(reply) && !capturing && !meetingStarting && !lastMicInUse) startListening();
     });
   });
 }
 
 // ---------- Schedulers ----------
 function heartbeatTick() {
-  if (agentBusy || meetingProc || earProc || state === 'speaking') return;
+  if (agentBusy || capturing || listening || state === 'speaking') return;
   if (!config.heartbeatMinutes) return;
   runAgent('[HEARTBEAT] Time: ' + new Date().toString() + '. Follow the heartbeat procedure in knowledge/reminders-todos.md. Reply SILENT if nothing is due.',
-    { fresh: true, background: true }, reply => {
+    { fresh: true, background: true, model: config.agent.heartbeatModel || 'haiku' }, reply => {
       if (reply && reply.toUpperCase() !== 'SILENT') speak(reply);
     });
 }
@@ -407,7 +585,7 @@ function briefTick() {
   const hhmm = now.toTimeString().slice(0, 5);
   const today = now.toDateString();
   if (hhmm === config.briefTime && lastBriefDate !== today &&
-      !agentBusy && !meetingProc && !earProc && state !== 'speaking') {
+      !agentBusy && !capturing && !listening && state !== 'speaking') {
     lastBriefDate = today;
     setState('thinking');
     bubble('Preparing your morning brief…', true);
@@ -418,34 +596,73 @@ function briefTick() {
 
 // ---------- IPC ----------
 ipcMain.on('mic-toggle', () => {
-  if (ttsProc) { stopSpeaking(); setState(meetingProc ? 'meeting' : 'idle'); return; }
-  if (earProc) { stopEar(); setState(meetingProc ? 'meeting' : 'idle'); bubble('Okay, cancelled.'); }
-  else startEar();
+  if (ttsProc) { stopSpeaking(); setState(capturing ? 'meeting' : 'idle'); return; }
+  if (listening || listenPending) { cancelListening(); bubble('Okay, cancelled.'); }
+  else startListening();
 });
 ipcMain.on('meeting-toggle', () => {
-  if (meetingProc) {
-    meetingSuppressed = true;      // any manual stop: don't auto-restart during this call
+  if (capturing || meetingStarting) {
+    // stop — including a start still in flight (meeting-started will honor
+    // meetingSuppressed and stop immediately)
+    meetingSuppressed = true;
     suppressFreeChecks = 0;
     stopMeeting();
+    if (meetingStarting) bubble('Okay — no notes for this meeting.', true);
   } else {
     startMeeting(false);
   }
 });
 ipcMain.on('text-command', (e, text) => { if (text && text.trim()) handleCommand(text.trim()); });
+// the ✖ button QUITS the app entirely; Alt+M is the hide/show toggle
 ipcMain.on('momo-quit', () => { app.quit(); });
 
 // ---------- app lifecycle ----------
 if (!app.requestSingleInstanceLock()) app.quit();
+// Ctrl+Alt+M is owned by the Start Menu shortcut: with Momo closed it launches her;
+// with Momo running the relaunch arrives here as a second-instance signal -> toggle.
+app.on('second-instance', () => toggleMomo());
 app.whenReady().then(() => {
   createWindow();
+  startEarDaemon();                                   // models load once, up front
+
+  // global hotkey: summon (and listen) / dismiss from anywhere
+  const hotkey = config.ui.hotkey || 'Alt+M';
+  try {
+    if (!globalShortcut.register(hotkey, toggleMomo)) log('hotkey busy:', hotkey);
+    else log('hotkey registered:', hotkey);
+  } catch (e) { log('hotkey error:', e.message); }
+
+  // tray icon: the only place to really quit
+  try {
+    const icon = nativeImage.createFromPath(path.join(__dirname, 'renderer', CHAR + '.png'))
+      .resize({ width: 24, height: 24 });
+    tray = new Tray(icon);
+    tray.setToolTip(CHAR_NAME + '  (' + hotkey + ')');
+    tray.setContextMenu(Menu.buildFromTemplate([
+      { label: 'Show / hide  (' + hotkey + ')', click: toggleMomo },
+      { type: 'separator' },
+      { label: 'Quit ' + CHAR_NAME, click: () => app.quit() },
+    ]));
+    tray.on('click', toggleMomo);
+  } catch (e) { log('tray error:', e.message); }
+
   setInterval(heartbeatTick, Math.max(5, config.heartbeatMinutes || 15) * 60000);
   setInterval(briefTick, 30000);
   setInterval(meetingWatchTick, Math.max(5, config.meeting.checkSeconds || 15) * 1000);
 });
-app.on('before-quit', () => {
+app.on('will-quit', () => { try { globalShortcut.unregisterAll(); } catch (e) {} });
+app.on('before-quit', (e) => {
+  if (quitting) return;               // second pass: let the quit proceed
   quitting = true;
-  stopEar();
-  if (meetingProc) { try { meetingProc.stdin.write('stop\n'); } catch (e) {} try { meetingProc.kill(); } catch (e) {} }
   stopSpeaking();
+  if (ear) {
+    // hold the quit briefly so the daemon can flush its transcript
+    e.preventDefault();
+    const p = ear;
+    earSend('quit');
+    const finish = () => { try { p.kill(); } catch (e2) {} app.exit(0); };
+    p.once('exit', () => app.exit(0));
+    setTimeout(finish, 1500);
+  }
 });
 app.on('window-all-closed', () => app.quit());

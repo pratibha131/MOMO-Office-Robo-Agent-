@@ -34,6 +34,11 @@ Write to data/notes/YYYY-MM-DD-<slug>.md:
 
 ## Action Items for Pratibha
 - <only the user's own tasks, restated crisply>
+
+## Files referenced
+- <every file/deck/sheet mentioned in the meeting: best-guess name + who shared it.
+  Omit the section if none. The user may later say "open the file from the meeting"
+  — knowledge/find-files.md uses this list to locate it.>
 ```
 
 Rules of quality:
@@ -44,7 +49,8 @@ Rules of quality:
 
 ## Then
 1. Open the notes in Notepad: Start-Process notepad.exe with the absolute path.
-2. Add every task assigned to the USER to data/todos.json (reminders-todos.md schema).
+2. Add every task assigned to the USER to data/todos.json (reminders-todos.md schema)
+   AND as checkbox lines on the OneNote "Momo To-Dos" page (knowledge/onenote-todos.md).
    If a deadline was "before our next meeting", use due_type
    "before_next_meeting_with:<assigner>".
 3. Update long-term memory (data/memory.md): under the right project heading, add

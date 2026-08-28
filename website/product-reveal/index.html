@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Product Reveal — Assembled in 3D</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="wordmark">P H I L I P S</div>
+    <nav class="nav">
+      <a href="#build">The Build</a>
+      <a href="#specs">Specs</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <div class="assembly-wrapper" id="assembly-track">
+    <section class="hero">
+      <canvas id="scene"></canvas>
+      <div class="hero-copy">
+        <p class="eyebrow">FROM PARTS TO PRODUCT</p>
+        <h1>Engineered.<br>Assembled.<br>Real.</h1>
+        <p class="sub">Scroll to watch every component come together — piece by piece — into the finished product.</p>
+      </div>
+      <div class="scroll-cue">
+        <span></span>
+        <p>Scroll to assemble</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="build" id="build">
+    <h2>Built From First Principles</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="icon-ring"></div>
+        <h3>Precision Engineering</h3>
+        <p>Every component is modeled and toleranced before it ever meets the next — nothing is forced into place.</p>
+      </div>
+      <div class="card">
+        <div class="icon-ring"></div>
+        <h3>Premium Materials</h3>
+        <p>Aerospace-grade metals and reinforced polymers, chosen for durability as much as for finish.</p>
+      </div>
+      <div class="card">
+        <div class="icon-ring"></div>
+        <h3>Considered Design</h3>
+        <p>Form follows function — every curve and seam earns its place in the final assembly.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="specs" id="specs">
+    <div class="stat">
+      <span class="num">6</span>
+      <span class="label">Core Components</span>
+    </div>
+    <div class="stat">
+      <span class="num">0.1mm</span>
+      <span class="label">Fit Tolerance</span>
+    </div>
+    <div class="stat">
+      <span class="num">100%</span>
+      <span class="label">Quality Checked</span>
+    </div>
+  </section>
+
+  <footer class="cta" id="contact">
+    <h2>Let's Build What's Next</h2>
+    <p>Ready to bring your product to life with the same precision?</p>
+    <a class="btn" href="mailto:Pratibha.Mehta@philips.com">Get in touch</a>
+  </footer>
+
+  <script src="js/three.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

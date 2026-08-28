@@ -2,6 +2,14 @@
 
 Two JSON stores in data/ — always read-modify-write the whole file, keep valid JSON.
 
+**OneNote mirror (IMPORTANT):** every to-do also lives on the user's OneNote page
+"Momo To-Dos" (knowledge/onenote-todos.md has the tested recipes). Adding a todo →
+add the OneNote checkbox line too. User says they completed something → set
+done:true here AND tick + strike through the OneNote line (keep the struck line
+visible as a record — never delete). If the two ever disagree, OneNote wins for
+done-status (the user may tick boxes by hand); import manual OneNote ticks back
+into todos.json when you notice them.
+
 ## data/reminders.json — user-requested reminders
 ```json
 [{ "id": "r-20260827-1", "created": "2026-08-27", "text": "ask Kavya about project updates",
@@ -16,7 +24,7 @@ Trigger types:
 
 ## data/todos.json — tasks (mostly harvested from meeting notes)
 ```json
-[{ "id": "t-20260827-1", "task": "Share BCP test report", "assigned_by": "Rahul",
+[{ "id": "t-20260827-1", "task": "Share VCP test report", "assigned_by": "Rahul",
    "due": "2026-09-02", "due_type": "date", "source": "notes/2026-08-27-bcp-sync.md",
    "done": false, "reminded": false }]
 ```
@@ -31,9 +39,11 @@ due_type:
 3. Reminders: for each undelivered reminder whose trigger fires now -> include it in the
    spoken output, phrased helpfully: "Heads up — Kavya is in your 3 PM meeting. That is
    who you wanted to ask about the project updates." Then set delivered:true.
-4. Todos: due tomorrow (or the before-next-meeting rule) and not done and not reminded ->
-   "Reminder: your report for Rahul is due tomorrow, before your sync with him."
-   Set reminded:true.
+4. Todos: BEFORE nudging, read the OneNote "Momo To-Dos" page once and import any
+   manually ticked boxes into todos.json as done:true (the user ticks by hand too).
+   Then: due tomorrow (or the before-next-meeting rule) and not done and not
+   reminded -> "Reminder: your report for Rahul is due tomorrow, before your sync
+   with him." Set reminded:true. Never nudge a task whose OneNote line is struck.
 5. Recap offer: if a meeting starts within ~10 min and data/notes/ contains notes from a
    previous meeting with the same organizer or similar subject -> ask: "Your BCP sync
    with Rahul starts in ten minutes — want a quick recap of the last one?" (The yes/no
