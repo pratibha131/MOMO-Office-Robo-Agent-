@@ -1,0 +1,54 @@
+{
+  "voice": "en-US-JennyNeural",
+  "presenter": {
+    "image": "C:\\Users\\320320898\\OneDrive - Philips\\Desktop\\Robo-Agent\\data\\videos\\momo_face.png",
+    "name": "Momo"
+  },
+  "scenes": [
+    {
+      "type": "title",
+      "heading": "Meet Momo",
+      "sub": "Your voice-driven desktop companion",
+      "narration": "Hi! I'm Momo \u2014 a little desktop companion who lives in the corner of your screen. In the next minute, I'll show you what I can do for your workday."
+    },
+    {
+      "type": "bullets",
+      "heading": "What I handle for you",
+      "bullets": [
+        "Draft and send email \u2014 I always ask before sending",
+        "Schedule Teams meetings, checking conflicts first",
+        "Take meeting notes in Hindi, English, or Hinglish",
+        "Keep your to-dos in OneNote \u2014 ticked and struck through"
+      ],
+      "narration": "Just press the hotkey and speak. I draft your emails and always ask before sending. I schedule your Teams meetings after checking your calendar. I quietly take notes in your meetings \u2014 even in Hindi or Hinglish \u2014 and I keep your to-do list alive in OneNote."
+    },
+    {
+      "type": "chart",
+      "heading": "Minutes I give back \u2014 every day",
+      "chart": {
+        "kind": "bar",
+        "labels": [
+          "Email triage",
+          "Meeting notes",
+          "Scheduling",
+          "File hunting"
+        ],
+        "values": [
+          45,
+          30,
+          15,
+          20
+        ],
+        "unit": "minutes per day"
+      },
+      "narration": "Here's what that adds up to. Around forty five minutes on email triage, thirty on meeting notes, and more on scheduling and hunting for files. That's nearly two hours a day \u2014 over nine hours every week, back in your hands."
+    },
+    {
+      "type": "outro",
+      "heading": "Press Control Alt M.",
+      "sub": "And just speak.",
+      "image": "C:\\Users\\320320898\\OneDrive - Philips\\Desktop\\Robo-Agent\\app\\renderer\\momo.png",
+      "narration": "Ready to try? Press Control, Alt, M \u2014 and just speak. I'll take it from there. See you on your desktop!"
+    }
+  ]
+}

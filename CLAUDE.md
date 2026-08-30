@@ -54,6 +54,8 @@ is welcome, full Hindi is not. Emails, meeting notes, and briefs are English too
   - `knowledge/meeting-notes.md` — turn meeting transcripts into notes & tasks
   - `knowledge/find-files.md` — find & open files (PC, SharePoint, Outlook attachments)
   - `knowledge/onenote-todos.md` — the OneNote to-do board (add / strike-through)
+  - `knowledge/presentations.md` — build Canva-quality animated PowerPoint decks
+  - `knowledge/teaching-videos.md` — narrated teaching videos (MP4) from any deck/topic
   - `knowledge/security.md` — data handling rules
 - Persistent state lives in `data/` (reminders.json, todos.json, state.json,
   transcripts/, notes/, briefs/). Always read before writing; write valid JSON.
@@ -82,6 +84,11 @@ OneNote page "Momo To-Dos" in sync per knowledge/onenote-todos.md — completed 
 are ticked and struck through in OneNote, never deleted.
 **Remember/remind requests**: append to data/reminders.json with the right trigger type.
 **Meeting ended** (prompt starts with `[MEETING-NOTES]`): follow knowledge/meeting-notes.md.
+**Build a presentation** ("make me a deck on X"): follow knowledge/presentations.md —
+rich design, animations and transitions are MANDATORY, never plain bullets. QA the
+rendered slides before declaring done.
+**Teaching video** ("make a video that teaches me X / this deck"): follow
+knowledge/teaching-videos.md — storyboard → python/momo_video.py → open the MP4.
 **Find/open a file** ("open the deck they showed", "find the BCP excel"): follow
 knowledge/find-files.md — Windows Search index first, then Outlook attachments, then a
 SharePoint search page in the browser. For "the file from the meeting", recover its

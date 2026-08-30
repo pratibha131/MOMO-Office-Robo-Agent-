@@ -1,0 +1,48 @@
+{
+  "voice": "en-US-JennyNeural",
+  "scenes": [
+    {
+      "type": "slide",
+      "image": "C:\\Users\\320320898\\OneDrive - Philips\\Desktop\\Robo-Agent\\data\\videos\\ai_slides\\s1.png",
+      "zoom": "in",
+      "narration": "Welcome! Today I'll walk you through Artificial Intelligence \u2014 using our own MoS GURU deck. Simply put, AI is technology that lets machines learn, analyze, and make decisions the way humans do. And here's the key idea: it isn't here to replace us \u2014 it's here to make us more productive."
+    },
+    {
+      "type": "slide",
+      "image": "C:\\Users\\320320898\\OneDrive - Philips\\Desktop\\Robo-Agent\\data\\videos\\ai_slides\\s2.png",
+      "zoom": "out",
+      "popup": {
+        "at": 9.0,
+        "title": "Try it yourself",
+        "w": 560,
+        "x": 660,
+        "y": 106,
+        "lines": [
+          "> Summarize this report in 3 bullets",
+          "AI: Done \u2014 here are your key points.",
+          "> Now draft a reply to the client",
+          "AI: Sure \u2014 a draft is ready to review."
+        ]
+      },
+      "narration": "So how does it actually work \u2014 and how should YOU work with it? It's a simple loop of four steps. First, give a clear prompt \u2014 describe your task in plain, specific language. The AI reads it, processes the context, and generates a response. Watch the little demo on screen: you ask for a summary, you get your key points. You ask for a draft, and it's ready to review. Clear ask in \u2014 useful answer out. That's the whole skill."
+    },
+    {
+      "type": "slide",
+      "image": "C:\\Users\\320320898\\OneDrive - Philips\\Desktop\\Robo-Agent\\data\\videos\\ai_slides\\s3.png",
+      "zoom": "in",
+      "narration": "AI in business evolves in three stages. At the basic level, think faster email drafting and meeting recaps. The intermediate stage brings meeting scheduling, automated approvals for leave and finance, and smart dashboards. And at the advanced level, AI supports real decisions \u2014 even helping doctors detect diseases faster. Most teams start basic, and climb."
+    },
+    {
+      "type": "slide",
+      "image": "C:\\Users\\320320898\\OneDrive - Philips\\Desktop\\Robo-Agent\\data\\videos\\ai_slides\\s4.png",
+      "zoom": "out",
+      "narration": "The tools you'll meet most often: ChatGPT for content and summarization, Copilot built into Microsoft tools, Gemini for research, and Claude for document analysis and writing. The wins show up everywhere \u2014 healthcare, IT support, finance, manufacturing \u2014 saving time, reducing manual work, and supporting better decisions."
+    },
+    {
+      "type": "slide",
+      "image": "C:\\Users\\320320898\\OneDrive - Philips\\Desktop\\Robo-Agent\\data\\videos\\ai_slides\\s5.png",
+      "zoom": "in",
+      "narration": "Ready to continue your AI journey? Explore the AI Enterprise Portal for tools, learning resources, and best practices \u2014 or request access and book a deep-dive session with the team. Thanks for learning with me \u2014 see you in the next lesson!"
+    }
+  ]
+}
