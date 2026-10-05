@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artificial Intelligence — Reimagining What's Possible</title>
+<style>
+  :root{
+    --bg:#0b0f1a;
+    --bg2:#0f1526;
+    --card:#131a2e;
+    --accent:#7c5cff;
+    --accent2:#33d6c0;
+    --accent3:#ff5c8a;
+    --text:#eef0f7;
+    --muted:#9aa3bf;
+    --border:rgba(255,255,255,0.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    overflow-x:hidden;
+  }
+  .bg-orbs{position:fixed;inset:0;z-index:-1;overflow:hidden;}
+  .orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:0.35;animation:float 18s ease-in-out infinite;}
+  .orb1{width:420px;height:420px;background:var(--accent);top:-100px;left:-100px;}
+  .orb2{width:380px;height:380px;background:var(--accent2);bottom:-120px;right:-80px;animation-delay:-6s;}
+  .orb3{width:300px;height:300px;background:var(--accent3);top:40%;left:50%;animation-delay:-12s;}
+  @keyframes float{
+    0%,100%{transform:translate(0,0) scale(1);}
+    50%{transform:translate(40px,-30px) scale(1.08);}
+  }
+
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:22px 6%;
+    backdrop-filter:blur(14px);
+    background:rgba(11,15,26,0.55);
+    border-bottom:1px solid var(--border);
+  }
+  .logo{font-weight:700;font-size:1.2rem;letter-spacing:0.5px;}
+  .logo span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  nav a{color:var(--muted);text-decoration:none;margin-left:32px;font-size:0.92rem;transition:color .2s;}
+  nav a:hover{color:var(--text);}
+
+  .hero{
+    min-height:100vh;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    text-align:center;padding:140px 6% 80px;position:relative;
+  }
+  .eyebrow{
+    color:var(--accent2);font-size:0.85rem;letter-spacing:3px;text-transform:uppercase;
+    margin-bottom:18px;opacity:0;animation:fadeUp .8s ease forwards;
+  }
+  .hero h1{
+    font-size:clamp(2.4rem,6vw,4.6rem);
+    line-height:1.08;font-weight:800;max-width:920px;
+    opacity:0;animation:fadeUp .8s ease .15s forwards;
+  }
+  .hero h1 .grad{background:linear-gradient(90deg,var(--accent),var(--accent3),var(--accent2));background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;}
+  @keyframes shine{to{background-position:200% center;}}
+  .hero p{
+    max-width:620px;color:var(--muted);font-size:1.15rem;margin-top:22px;line-height:1.6;
+    opacity:0;animation:fadeUp .8s ease .3s forwards;
+  }
+  .cta-row{margin-top:36px;display:flex;gap:16px;opacity:0;animation:fadeUp .8s ease .45s forwards;}
+  .btn{
+    padding:14px 30px;border-radius:999px;font-weight:600;font-size:0.95rem;
+    text-decoration:none;transition:transform .25s, box-shadow .25s;
+  }
+  .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent3));color:#fff;box-shadow:0 8px 30px rgba(124,92,255,0.35);}
+  .btn-primary:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(124,92,255,0.5);}
+  .btn-ghost{border:1px solid var(--border);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--accent2);color:var(--accent2);}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+
+  section{padding:110px 6%;max-width:1180px;margin:0 auto;}
+  .section-tag{color:var(--accent2);font-size:0.82rem;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;}
+  .section-title{font-size:clamp(1.8rem,3.4vw,2.6rem);font-weight:800;max-width:700px;margin-bottom:18px;}
+  .section-sub{color:var(--muted);max-width:680px;font-size:1.05rem;line-height:1.6;margin-bottom:56px;}
+
+  .reveal{opacity:0;transform:translateY(32px);transition:opacity .7s ease, transform .7s ease;}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;}
+  .card{
+    background:linear-gradient(160deg,var(--card),var(--bg2));
+    border:1px solid var(--border);border-radius:18px;padding:32px;
+    transition:transform .3s, border-color .3s;
+  }
+  .card:hover{transform:translateY(-6px);border-color:var(--accent);}
+  .card .icon{
+    width:52px;height:52px;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:20px;
+    background:linear-gradient(135deg,var(--accent),var(--accent3));
+  }
+  .card h3{font-size:1.15rem;margin-bottom:10px;}
+  .card p{color:var(--muted);font-size:0.95rem;line-height:1.6;}
+
+  .timeline{position:relative;padding-left:36px;border-left:2px solid var(--border);}
+  .t-item{position:relative;padding-bottom:44px;}
+  .t-item:last-child{padding-bottom:0;}
+  .t-item::before{
+    content:'';position:absolute;left:-43px;top:2px;width:14px;height:14px;border-radius:50%;
+    background:var(--accent2);box-shadow:0 0 0 4px rgba(51,214,192,0.2);
+  }
+  .t-year{color:var(--accent2);font-weight:700;font-size:0.9rem;letter-spacing:1px;}
+  .t-item h4{font-size:1.15rem;margin:6px 0;}
+  .t-item p{color:var(--muted);font-size:0.95rem;line-height:1.6;max-width:600px;}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:24px;text-align:center;}
+  .stat h2{font-size:2.6rem;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .stat p{color:var(--muted);margin-top:6px;font-size:0.9rem;}
+
+  .quote-block{
+    background:linear-gradient(135deg,rgba(124,92,255,0.12),rgba(51,214,192,0.08));
+    border:1px solid var(--border);border-radius:22px;padding:56px;text-align:center;
+  }
+  .quote-block p{font-size:1.4rem;font-weight:600;line-height:1.5;max-width:760px;margin:0 auto 16px;}
+  .quote-block span{color:var(--muted);font-size:0.9rem;}
+
+  footer{
+    text-align:center;padding:50px 6% 60px;color:var(--muted);font-size:0.88rem;
+    border-top:1px solid var(--border);
+  }
+  footer .logo{margin-bottom:10px;}
+
+  @media(max-width:640px){nav{display:none;}}
+</style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<header>
+  <div class="logo">Think<span>AI</span></div>
+  <nav>
+    <a href="#what">What is AI</a>
+    <a href="#timeline">History</a>
+    <a href="#applications">Applications</a>
+    <a href="#future">Future</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">Artificial Intelligence, Explained</div>
+  <h1>Machines that <span class="grad">learn, reason</span><br>and reshape our world</h1>
+  <p>From recommendation engines to self-driving cars, AI has quietly moved from science
+     fiction into everyday life. Here's a clear, honest look at what it actually is —
+     and where it's headed.</p>
+  <div class="cta-row">
+    <a href="#what" class="btn btn-primary">Explore AI →</a>
+    <a href="#applications" class="btn btn-ghost">See it in action</a>
+  </div>
+</section>
+
+<section id="what">
+  <div class="section-tag reveal">Foundations</div>
+  <h2 class="section-title reveal">What is Artificial Intelligence?</h2>
+  <p class="section-sub reveal">AI is the field of building systems that perform tasks
+     which normally require human intelligence — recognizing patterns, understanding
+     language, making decisions, and learning from experience.</p>
+
+  <div class="grid3">
+    <div class="card reveal">
+      <div class="icon">🧠</div>
+      <h3>Machine Learning</h3>
+      <p>Algorithms that improve automatically by learning patterns from data, rather
+         than being explicitly programmed for every rule.</p>
+    </div>
+    <div class="card reveal">
+      <div class="icon">🔤</div>
+      <h3>Natural Language</h3>
+      <p>Systems that understand, generate and converse in human language — powering
+         chatbots, translators and voice assistants.</p>
+    </div>
+    <div class="card reveal">
+      <div class="icon">👁️</div>
+      <h3>Computer Vision</h3>
+      <p>Teaching machines to interpret images and video — from face unlock to medical
+         scan analysis and self-driving perception.</p>
+    </div>
+    <div class="card reveal">
+      <div class="icon">🕸️</div>
+      <h3>Neural Networks</h3>
+      <p>Layered, brain-inspired architectures that power modern deep learning and
+         today's large language models.</p>
+    </div>
+    <div class="card reveal">
+      <div class="icon">🎯</div>
+      <h3>Reinforcement Learning</h3>
+      <p>Agents that learn by trial and error, optimizing for long-term reward — used in
+         robotics, gaming and resource management.</p>
+    </div>
+    <div class="card reveal">
+      <div class="icon">⚙️</div>
+      <h3>Generative AI</h3>
+      <p>Models that create new text, images, audio and code — the technology behind
+         today's AI assistants and creative tools.</p>
+    </div>
+  </div>
+</section>
+
+<section id="timeline">
+  <div class="section-tag reveal">A Brief History</div>
+  <h2 class="section-title reveal">From symbols to superintelligence talk</h2>
+  <p class="section-sub reveal">AI has gone through cycles of hype and "winters" — here
+     are the moments that mattered most.</p>
+
+  <div class="timeline">
+    <div class="t-item reveal">
+      <div class="t-year">1956</div>
+      <h4>The Dartmouth Workshop</h4>
+      <p>The term "Artificial Intelligence" is coined, launching AI as a formal field of
+         research.</p>
+    </div>
+    <div class="t-item reveal">
+      <div class="t-year">1997</div>
+      <h4>Deep Blue beats Kasparov</h4>
+      <p>IBM's chess computer defeats the reigning world champion, an early proof that
+         machines could outperform humans at complex reasoning tasks.</p>
+    </div>
+    <div class="t-item reveal">
+      <div class="t-year">2012</div>
+      <h4>Deep Learning breakthrough</h4>
+      <p>Neural networks trained on GPUs dramatically outperform prior methods on image
+         recognition, kicking off the modern AI boom.</p>
+    </div>
+    <div class="t-item reveal">
+      <div class="t-year">2022–Now</div>
+      <h4>The Generative AI era</h4>
+      <p>Large language models bring conversational AI, coding assistants and image
+         generation to hundreds of millions of everyday users.</p>
+    </div>
+  </div>
+</section>
+
+<section id="applications">
+  <div class="section-tag reveal">Real World</div>
+  <h2 class="section-title reveal">AI is already everywhere</h2>
+  <p class="section-sub reveal">It's rarely a robot — usually it's invisible, working
+     quietly inside the apps and services people use every day.</p>
+
+  <div class="stats reveal">
+    <div class="stat"><h2>Healthcare</h2><p>Faster diagnosis, drug discovery, imaging analysis</p></div>
+    <div class="stat"><h2>Finance</h2><p>Fraud detection, risk scoring, algorithmic trading</p></div>
+    <div class="stat"><h2>Mobility</h2><p>Route optimization, autonomous vehicles</p></div>
+    <div class="stat"><h2>Everyday Life</h2><p>Voice assistants, recommendations, smart replies</p></div>
+  </div>
+</section>
+
+<section id="future">
+  <div class="quote-block reveal">
+    <p>"The question isn't whether machines can think, but whether we'll design them
+       to think responsibly — with humans always in the loop."</p>
+    <span>— On the future of trustworthy AI</span>
+  </div>
+</section>
+
+<footer>
+  <div class="logo">Think<span>AI</span></div>
+  <p>A simple, honest primer on Artificial Intelligence — built for curious minds.</p>
+</footer>
+
+<script>
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  },{threshold:0.15});
+  revealEls.forEach(el=>io.observe(el));
+</script>
+
+</body>
+</html>

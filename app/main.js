@@ -239,7 +239,8 @@ function startEarDaemon() {
     '--silence-ms', String(config.stt.silenceMs || 1800),
     '--engine', config.stt.commandEngine || 'whisper',
     '--whisper-model', config.stt.whisperModel || 'small',
-    '--chunk-sec', String(config.stt.chunkSec || 30)];
+    '--chunk-sec', String(config.stt.chunkSec || 30),
+    '--glossary-file', path.join(DATA, 'meeting_glossary.txt')];
   if (config.stt.inputDevice) args.push('--input-device', config.stt.inputDevice);
   const p = spawn(PYTHON_EXE, args, {
     cwd: PROJECT, windowsHide: true,

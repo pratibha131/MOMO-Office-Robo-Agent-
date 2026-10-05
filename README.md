@@ -31,6 +31,10 @@ out loud when it's done.
 | "Remind me to ask Kavya about the project updates when we meet" | Saves a reminder; when a meeting with Kavya is about to start she nudges you |
 | "Give me my brief" | Morning CEO brief: important emails, today's meetings, Philips news (auto at the time in `config.json` too) |
 | "Email the BCP report file to Rahul" | Finds the file, attaches, confirms, review-or-send |
+| "Make me a deck on AI in field service" (a topic, no file) | Creative mode: her own design, rich visuals, animations and transitions; QA'd renders before she says done |
+| "Take the excel and make me the VCP presentation" / "build the ISC VCP deck" | Tracker mode: finds the newest VCP execution tracker, fills the approved VCP template with the exact Excel values (no rewording, no invented numbers), reconciles deck against Excel, opens it in PowerPoint and tells you the counts. Defaults in `config.json` → `vcp` |
+| "Make an Instagram reel promoting yourself" | Renders a vertical 9:16 reel (her character, pop-in captions synced to her voice, feature cards, call-to-action) plus the post caption with hashtags; ~40 s, made in 2-4 minutes |
+| "Make a presentation from this sales excel" (any other workbook) | Data-exact creative mode: her own design, but every figure and label verbatim from the workbook's cells, native charts from the real ranges, sources noted |
 | *(automatic)* When a Teams call starts | Momo detects it (Windows logs when Teams uses the mic) and quietly starts taking notes — REC badge shows. **Multilingual**: the meeting can be in Hindi, English, or Hinglish (Whisper, offline, auto-detects language). When the call ends she writes **executive English notes** — Key Discussion Points + an Action Items table (S.No. / Action / Owner / Timeline) — opens them in Notepad, adds your tasks to her to-do list, and updates her long-term memory. 📝 button toggles manually; `meeting.autoDetect: false` turns auto mode off |
 | ⌨️ button | Type instead of talking |
 

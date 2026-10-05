@@ -1,0 +1,1474 @@
+{
+  "model": {
+    "source_file": "C:\\Users\\320320898\\OneDrive - Philips\\Desktop\\VCP-NEW-FORMAT\\VCP - Execution sheet Version 2 -2.0.xlsx",
+    "sheet": "Service Transformation",
+    "function": "Service Transformation",
+    "years": [
+      2026,
+      2027,
+      2028
+    ],
+    "kpi_years": [
+      2026,
+      2027,
+      2028
+    ],
+    "themes": [
+      {
+        "year": 2026,
+        "theme": "Profitable Growth through Customer for Life 1.9M",
+        "theme_cell": "A5",
+        "rows": [
+          {
+            "row": 5,
+            "owner": null,
+            "action": "TechMax in Core Block (Z70/Z90)",
+            "start": null,
+            "planned": "2026-10-01T00:00:00",
+            "progress": 0.5,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 6,
+            "owner": null,
+            "action": "PoS for (Z10/Z30) along with Catalog",
+            "start": null,
+            "planned": "2026-10-01T00:00:00",
+            "progress": 0.5,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 7,
+            "owner": null,
+            "action": "CLV - EOS Extension, FD 30X30, Becon Monitor , Win11 PSC10",
+            "start": null,
+            "planned": "As per Programming HS",
+            "progress": 0.5,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 8,
+            "owner": null,
+            "action": "Dedicated Service comercial 3 regions and Service Operations Hedcount NAR 3 regions",
+            "start": null,
+            "planned": null,
+            "progress": 1,
+            "status": "Completed",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          }
+        ]
+      },
+      {
+        "year": 2026,
+        "theme": "Productivity - 1.5< + 0.2",
+        "theme_cell": "A9",
+        "rows": [
+          {
+            "row": 9,
+            "owner": null,
+            "action": "High Activity Sites Monitoring, FRU Rationalization",
+            "start": null,
+            "planned": "Q4 2026",
+            "progress": 0.25,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 10,
+            "owner": null,
+            "action": "Li Phosphate Battery (Poc) ++",
+            "start": null,
+            "planned": null,
+            "progress": 1,
+            "status": "Completed",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 11,
+            "owner": null,
+            "action": "Sevice Productivity Funnel expansion",
+            "start": null,
+            "planned": null,
+            "progress": 0.5,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 12,
+            "owner": null,
+            "action": "COO Imrovement - Labor hrs reduction, Optimised allocations, Wrong bookings",
+            "start": null,
+            "planned": null,
+            "progress": 0.75,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          }
+        ]
+      },
+      {
+        "year": 2026,
+        "theme": "Digital Service - Chat GPT AI Roadmap for Customer Experience",
+        "theme_cell": "A13",
+        "rows": [
+          {
+            "row": 13,
+            "owner": null,
+            "action": "Chatbot based on Service Manual",
+            "start": null,
+            "planned": "Q4 2026",
+            "progress": 1,
+            "status": "Completed",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 14,
+            "owner": null,
+            "action": "PSC 10 and Connectivity improvement",
+            "start": null,
+            "planned": null,
+            "progress": 0.25,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 15,
+            "owner": null,
+            "action": "RSDI - Remote software distribution and Installation -",
+            "start": null,
+            "planned": null,
+            "progress": 0.5,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 16,
+            "owner": null,
+            "action": "Operational excellence - OPF, FVF, Remore rsolution",
+            "start": null,
+            "planned": null,
+            "progress": 0.75,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          }
+        ]
+      },
+      {
+        "year": 2026,
+        "theme": "Process Improvement - +0.5M",
+        "theme_cell": "A17",
+        "rows": [
+          {
+            "row": 17,
+            "owner": null,
+            "action": "IB retension - Visibility and Win rate",
+            "start": null,
+            "planned": "Q4 2026",
+            "progress": 0.75,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 18,
+            "owner": null,
+            "action": "T&M - Zero Sales, Process gaps",
+            "start": null,
+            "planned": null,
+            "progress": 0.5,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 19,
+            "owner": null,
+            "action": "Pricing Strategy - Priority regions",
+            "start": null,
+            "planned": null,
+            "progress": 0.75,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          }
+        ]
+      },
+      {
+        "year": 2027,
+        "theme": "CLV, TechMax Propositions Expansions",
+        "theme_cell": "A23",
+        "rows": [
+          {
+            "row": 23,
+            "owner": null,
+            "action": "Extend to FE - AVO, Elevate Upgrade, (SW High Margin)",
+            "start": null,
+            "planned": null,
+            "progress": 0.25,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 24,
+            "owner": null,
+            "action": "CLV Expansion - 32Inch Monitor, LiPH, Wireless Video , Onscreen Keyboard (HW)",
+            "start": null,
+            "planned": null,
+            "progress": 0.25,
+            "status": "In progress",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          }
+        ]
+      },
+      {
+        "year": 2027,
+        "theme": "Market Share Gain deom HC- CP Penetrtion, Inside Sales, CLV GTM strategy",
+        "theme_cell": "A26",
+        "rows": [
+          {
+            "row": 26,
+            "owner": null,
+            "action": "CP Imprvement by XX%",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 27,
+            "owner": null,
+            "action": "CLV revenue by region - DMB and Tracking",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 28,
+            "owner": null,
+            "action": "Value Proposition Workshops for Regins",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 29,
+            "owner": null,
+            "action": "GTM",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          }
+        ]
+      },
+      {
+        "year": 2027,
+        "theme": "Profitability through Funnelled Project",
+        "theme_cell": "A30",
+        "rows": [
+          {
+            "row": 30,
+            "owner": null,
+            "action": "Productivity Funnel - LiPh Battery, RSDI, PSC10",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 31,
+            "owner": null,
+            "action": "Warranty for consumable FRU, FRU nego, Derisking - PE CSCollaboraion",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 32,
+            "owner": null,
+            "action": "Service Delivery - CLV Margins and Contract / T&M Price Realisation DMB, Monitoring",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 33,
+            "owner": null,
+            "action": "Part Harvesting Supplier setup",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          }
+        ]
+      },
+      {
+        "year": 2028,
+        "theme": "CLV, TechMax Propositions Expansions",
+        "theme_cell": "A37",
+        "rows": [
+          {
+            "row": 37,
+            "owner": null,
+            "action": "Extend to FE - iApps, Duel Fluro, Pinch Zoom / Xres, QCA, QVA, 30 FPS",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 38,
+            "owner": null,
+            "action": "CLV Expansion - 15Kw to 25KW, IGZo detector, Injector Interface (HW)",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          }
+        ]
+      },
+      {
+        "year": 2028,
+        "theme": "Profitability through Funnelled Project",
+        "theme_cell": "A39",
+        "rows": [
+          {
+            "row": 39,
+            "owner": null,
+            "action": "Harvest- Differentiated Parts - Parts Nova",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 40,
+            "owner": null,
+            "action": "Gillardoni Derisking - PE CS colaboraion",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 41,
+            "owner": null,
+            "action": "techMax and Extended Warranty as Coreblock",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          },
+          {
+            "row": 42,
+            "owner": null,
+            "action": "Material and COO reduction - Labor cost optimisation, Allocation controls",
+            "start": null,
+            "planned": null,
+            "progress": null,
+            "status": "Not started",
+            "theme_progress": null,
+            "units": null,
+            "impact": null
+          }
+        ]
+      }
+    ],
+    "kpis": {
+      "critical": [
+        {
+          "kind": "critical",
+          "row": 48,
+          "metric": "Service Revenue",
+          "owner": null,
+          "baseline": "~€68M",
+          "baseline_fmt": "General",
+          "targets": {
+            "2026": "€76.5M",
+            "2027": "€80.4M",
+            "2028": "€96M"
+          },
+          "committed": "CLV roadmap + contract expansion + PoS bundling",
+          "quarters": {
+            "Q1": {
+              "target": 18.02,
+              "actual": 17.71
+            },
+            "Q2": {
+              "target": 18.85,
+              "actual": 18.55
+            },
+            "Q3": {
+              "target": 19.38,
+              "actual": null
+            },
+            "Q4": {
+              "target": 21.11,
+              "actual": null
+            }
+          },
+          "cells": {
+            "baseline": "C48",
+            "committed": "G48",
+            "owner": "B48",
+            "target_2026": "D48",
+            "target_2027": "E48",
+            "target_2028": "F48",
+            "Q1_target": "I49",
+            "Q1_actual": "I51",
+            "Q2_target": "J49",
+            "Q2_actual": "J51",
+            "Q3_target": "K49",
+            "Q3_actual": "K51",
+            "Q4_target": "L49",
+            "Q4_actual": "L51"
+          },
+          "kind_of_value": "currency",
+          "lower_is_better": false
+        },
+        {
+          "kind": "critical",
+          "row": 53,
+          "metric": "Service Igm",
+          "owner": null,
+          "baseline": 0.493,
+          "baseline_fmt": "0.00%",
+          "targets": {
+            "2026": 0.5,
+            "2027": 0.53,
+            "2028": 0.567
+          },
+          "committed": "Digital service + pricing + productivity",
+          "quarters": {
+            "Q1": {
+              "target": 0.493,
+              "actual": 0.424
+            },
+            "Q2": {
+              "target": 0.491,
+              "actual": 0.475
+            },
+            "Q3": {
+              "target": 0.503,
+              "actual": null
+            },
+            "Q4": {
+              "target": 0.539,
+              "actual": null
+            }
+          },
+          "cells": {
+            "baseline": "C53",
+            "committed": "G53",
+            "owner": "B53",
+            "target_2026": "D53",
+            "target_2027": "E53",
+            "target_2028": "F53",
+            "Q1_target": "I54",
+            "Q1_actual": "I56",
+            "Q2_target": "J54",
+            "Q2_actual": "J56",
+            "Q3_target": "K54",
+            "Q3_actual": "K56",
+            "Q4_target": "L54",
+            "Q4_actual": "L56"
+          },
+          "kind_of_value": "percent",
+          "lower_is_better": false
+        },
+        {
+          "kind": "critical",
+          "row": 58,
+          "metric": "Remote Resolution",
+          "owner": null,
+          "baseline": 0.268,
+          "baseline_fmt": "General",
+          "targets": {
+            "2026": null,
+            "2027": null,
+            "2028": ">36%"
+          },
+          "committed": "Digital tools (RSDI, PSC10, AI tools)",
+          "quarters": {
+            "Q1": {
+              "target": 0.222,
+              "actual": 0.211
+            },
+            "Q2": {
+              "target": 0.23,
+              "actual": 0.23
+            },
+            "Q3": {
+              "target": null,
+              "actual": null
+            },
+            "Q4": {
+              "target": null,
+              "actual": null
+            }
+          },
+          "cells": {
+            "baseline": "C58",
+            "committed": "G58",
+            "owner": "B58",
+            "target_2026": "D58",
+            "target_2027": "E58",
+            "target_2028": "F58",
+            "Q1_target": "I59",
+            "Q1_actual": "I61",
+            "Q2_target": "J59",
+            "Q2_actual": "J61",
+            "Q3_target": "K59",
+            "Q3_actual": "K61",
+            "Q4_target": "L59",
+            "Q4_actual": "L61"
+          },
+          "kind_of_value": "percent",
+          "lower_is_better": false
+        }
+      ],
+      "enabling": [
+        {
+          "kind": "enabling",
+          "row": 68,
+          "metric": "Contract Penetration",
+          "owner": null,
+          "baseline": 0.48,
+          "baseline_fmt": "0%",
+          "targets": {
+            "2026": 0.5,
+            "2027": 0.53,
+            "2028": 0.55
+          },
+          "committed": "GTM enablement + bundling at sale",
+          "quarters": {
+            "Q1": {
+              "target": 0.541,
+              "actual": 0.535
+            },
+            "Q2": {
+              "target": 0.547,
+              "actual": 0.5402
+            },
+            "Q3": {
+              "target": 0.551,
+              "actual": null
+            },
+            "Q4": {
+              "target": 0.56,
+              "actual": null
+            }
+          },
+          "cells": {
+            "baseline": "C68",
+            "committed": "G68",
+            "owner": "B68",
+            "target_2026": "D68",
+            "target_2027": "E68",
+            "target_2028": "F68",
+            "Q1_target": "I69",
+            "Q1_actual": "I71",
+            "Q2_target": "J69",
+            "Q2_actual": "J71",
+            "Q3_target": "K69",
+            "Q3_actual": "K71",
+            "Q4_target": "L69",
+            "Q4_actual": "L71"
+          },
+          "kind_of_value": "percent",
+          "lower_is_better": false
+        },
+        {
+          "kind": "enabling",
+          "row": 73,
+          "metric": "CLV Revenue",
+          "owner": null,
+          "baseline": "€1.3M",
+          "baseline_fmt": "General",
+          "targets": {
+            "2026": "€2.5M",
+            "2027": "€5.2M",
+            "2028": "€11M"
+          },
+          "committed": "TechMax, Hero features, upgrades",
+          "quarters": {
+            "Q1": {
+              "target": 0.26,
+              "actual": 0.48
+            },
+            "Q2": {
+              "target": 0.32,
+              "actual": 0.16
+            },
+            "Q3": {
+              "target": 0.32,
+              "actual": null
+            },
+            "Q4": {
+              "target": 0.39,
+              "actual": null
+            }
+          },
+          "cells": {
+            "baseline": "C73",
+            "committed": "G73",
+            "owner": "B73",
+            "target_2026": "D73",
+            "target_2027": "E73",
+            "target_2028": "F73",
+            "Q1_target": "I74",
+            "Q1_actual": "I76",
+            "Q2_target": "J74",
+            "Q2_actual": "J76",
+            "Q3_target": "K74",
+            "Q3_actual": "K76",
+            "Q4_target": "L74",
+            "Q4_actual": "L76"
+          },
+          "kind_of_value": "currency",
+          "lower_is_better": false
+        },
+        {
+          "kind": "enabling",
+          "row": 78,
+          "metric": "Part Harvesting Savings",
+          "owner": null,
+          "baseline": "Baseline",
+          "baseline_fmt": "General",
+          "targets": {
+            "2026": "€0.3M",
+            "2027": "€1M",
+            "2028": "(+)€2M"
+          },
+          "committed": "Circular economy + IB returns",
+          "quarters": {
+            "Q1": {
+              "target": null,
+              "actual": null
+            },
+            "Q2": {
+              "target": null,
+              "actual": null
+            },
+            "Q3": {
+              "target": null,
+              "actual": null
+            },
+            "Q4": {
+              "target": null,
+              "actual": null
+            }
+          },
+          "cells": {
+            "baseline": "C78",
+            "committed": "G78",
+            "owner": "B78",
+            "target_2026": "D78",
+            "target_2027": "E78",
+            "target_2028": "F78",
+            "Q1_target": "I79",
+            "Q1_actual": "I81",
+            "Q2_target": "J79",
+            "Q2_actual": "J81",
+            "Q3_target": "K79",
+            "Q3_actual": "K81",
+            "Q4_target": "L79",
+            "Q4_actual": "L81"
+          },
+          "kind_of_value": "currency",
+          "lower_is_better": false
+        },
+        {
+          "kind": "enabling",
+          "row": 83,
+          "metric": "Pricing / Value Realization",
+          "owner": null,
+          "baseline": null,
+          "baseline_fmt": "General",
+          "targets": {
+            "2026": null,
+            "2027": null,
+            "2028": null
+          },
+          "committed": null,
+          "quarters": {
+            "Q1": {
+              "target": null,
+              "actual": null
+            },
+            "Q2": {
+              "target": null,
+              "actual": null
+            },
+            "Q3": {
+              "target": null,
+              "actual": null
+            },
+            "Q4": {
+              "target": null,
+              "actual": null
+            }
+          },
+          "cells": {
+            "baseline": "C83",
+            "committed": "G83",
+            "owner": "B83",
+            "target_2026": "D83",
+            "target_2027": "E83",
+            "target_2028": "F83",
+            "Q1_target": "I84",
+            "Q1_actual": "I86",
+            "Q2_target": "J84",
+            "Q2_actual": "J86",
+            "Q3_target": "K84",
+            "Q3_actual": "K86",
+            "Q4_target": "L84",
+            "Q4_actual": "L86"
+          },
+          "kind_of_value": "number",
+          "lower_is_better": false
+        },
+        {
+          "kind": "enabling",
+          "row": 88,
+          "metric": "T&M Margin",
+          "owner": null,
+          "baseline": null,
+          "baseline_fmt": "General",
+          "targets": {
+            "2026": null,
+            "2027": null,
+            "2028": null
+          },
+          "committed": null,
+          "quarters": {
+            "Q1": {
+              "target": null,
+              "actual": null
+            },
+            "Q2": {
+              "target": null,
+              "actual": null
+            },
+            "Q3": {
+              "target": null,
+              "actual": null
+            },
+            "Q4": {
+              "target": null,
+              "actual": null
+            }
+          },
+          "cells": {
+            "baseline": "C88",
+            "committed": "G88",
+            "owner": "B88",
+            "target_2026": "D88",
+            "target_2027": "E88",
+            "target_2028": "F88",
+            "Q1_target": "I89",
+            "Q1_actual": "I91",
+            "Q2_target": "J89",
+            "Q2_actual": "J91",
+            "Q3_target": "K89",
+            "Q3_actual": "K91",
+            "Q4_target": "L89",
+            "Q4_actual": "L91"
+          },
+          "kind_of_value": "number",
+          "lower_is_better": false
+        },
+        {
+          "kind": "enabling",
+          "row": 93,
+          "metric": "Service Productivity",
+          "owner": null,
+          "baseline": null,
+          "baseline_fmt": "General",
+          "targets": {
+            "2026": null,
+            "2027": null,
+            "2028": null
+          },
+          "committed": null,
+          "quarters": {
+            "Q1": {
+              "target": null,
+              "actual": null
+            },
+            "Q2": {
+              "target": null,
+              "actual": null
+            },
+            "Q3": {
+              "target": null,
+              "actual": null
+            },
+            "Q4": {
+              "target": null,
+              "actual": null
+            }
+          },
+          "cells": {
+            "baseline": "C93",
+            "committed": "G93",
+            "owner": "B93",
+            "target_2026": "D93",
+            "target_2027": "E93",
+            "target_2028": "F93",
+            "Q1_target": "I94",
+            "Q1_actual": "I96",
+            "Q2_target": "J94",
+            "Q2_actual": "J96",
+            "Q3_target": "K94",
+            "Q3_actual": "K96",
+            "Q4_target": "L94",
+            "Q4_actual": "L96"
+          },
+          "kind_of_value": "number",
+          "lower_is_better": false
+        }
+      ]
+    },
+    "dependencies": [
+      {
+        "year": 2026,
+        "row": 130,
+        "function": "ISC",
+        "theme": "E2E portfolio simplificaiton \"TRIM\"",
+        "action": "Identify Late cutomisation option which can be upgraded as FE kit to support core standard configuration",
+        "planned": "Q3",
+        "progress": 0.5,
+        "status": "In progress"
+      },
+      {
+        "year": 2026,
+        "row": 131,
+        "function": "Quality",
+        "theme": "Reduce Product quality failures in Warranty-Part Complaints (Impact to be written)",
+        "action": "1.Warranty failure data and associated cost",
+        "planned": "2026-05-19T00:00:00",
+        "progress": 1,
+        "status": "Completed"
+      },
+      {
+        "year": 2026,
+        "row": 132,
+        "function": "Quality",
+        "theme": "Reduce Product quality failures in Warranty-Part Complaints (Impact to be written)",
+        "action": "2. Failed Samples of MVS Internal cables from Failure Lab analysis [BEST Location from Field returned part.]",
+        "planned": "2026-11-19T00:00:00",
+        "progress": null,
+        "status": "Not started"
+      },
+      {
+        "year": 2026,
+        "row": 133,
+        "function": "Quality",
+        "theme": "Reduce Product quality failures in Warranty-Part Complaints (Impact to be written)",
+        "action": "3. Tracking of dismantled MVS-PCs at Field to be reached at Redisys (Supplier)",
+        "planned": "2026-10-13T00:00:00",
+        "progress": null,
+        "status": "Not started"
+      },
+      {
+        "year": 2026,
+        "row": 134,
+        "function": "Quality",
+        "theme": "Reduce Product quality failures in Warranty-Non-Part Complaints",
+        "action": "Data collection for Non Part failure",
+        "planned": "2026-10-30T00:00:00",
+        "progress": null,
+        "status": "Not started"
+      },
+      {
+        "year": 2026,
+        "row": 135,
+        "function": "Marketing",
+        "theme": "Driving launch success for Systems",
+        "action": "Dhruv: Clarity on usability claims for CS features (26WK33)",
+        "planned": null,
+        "progress": null,
+        "status": "Not started"
+      },
+      {
+        "year": 2026,
+        "row": 136,
+        "function": "Marketing",
+        "theme": "Driving launch success for Systems",
+        "action": "Dhruv: Clarity on CS feature claims list along with substantiation plan",
+        "planned": null,
+        "progress": null,
+        "status": "Not started"
+      },
+      {
+        "year": 2026,
+        "row": 137,
+        "function": "Marketing",
+        "theme": "Driving launch success for Systems",
+        "action": "Dhruv: CS training plan",
+        "planned": null,
+        "progress": null,
+        "status": "Not started"
+      },
+      {
+        "year": 2026,
+        "row": 138,
+        "function": "Marketing",
+        "theme": "Driving launch success for Systems",
+        "action": "Dhruv: CS content for Kick-off sales training (Q4)",
+        "planned": null,
+        "progress": null,
+        "status": "Not started"
+      },
+      {
+        "year": 2026,
+        "row": 139,
+        "function": "NAR",
+        "theme": "OIT to Rev Cycle Time Reduction",
+        "action": "Sales: drive adoption of FS- Ready configurations via meeting 0",
+        "planned": null,
+        "progress": 0.5,
+        "status": "In progress"
+      },
+      {
+        "year": 2026,
+        "row": 140,
+        "function": "Europe",
+        "theme": "Maximize Service growth",
+        "action": "HOS pricing handshake",
+        "planned": "2026-01-31T00:00:00",
+        "progress": 1,
+        "status": "Completed"
+      },
+      {
+        "year": 2026,
+        "row": 141,
+        "function": "Europe",
+        "theme": "Maximize Service growth",
+        "action": "Tech Max 2026 Roadmap definition",
+        "planned": "2026-03-31T00:00:00",
+        "progress": 1,
+        "status": "Completed"
+      },
+      {
+        "year": 2027,
+        "row": 145,
+        "function": "Marketing",
+        "theme": "Driving launch success for Systems",
+        "action": "Dhruv: CS Training",
+        "planned": null,
+        "progress": null,
+        "status": "Not started"
+      },
+      {
+        "year": 2027,
+        "row": 146,
+        "function": "Marketing",
+        "theme": "Driving launch success for Systems",
+        "action": "Dhruv: CS online course code creation(Q1)",
+        "planned": null,
+        "progress": null,
+        "status": "Not started"
+      },
+      {
+        "year": 2027,
+        "row": 147,
+        "function": "Europe",
+        "theme": "Maximize Service growth",
+        "action": "Tech Max 2027 Roadmap",
+        "planned": null,
+        "progress": null,
+        "status": "Not started"
+      },
+      {
+        "year": 2027,
+        "row": 148,
+        "function": "Europe",
+        "theme": "Maximize Service growth",
+        "action": "EW/TM Core Block proposition",
+        "planned": null,
+        "progress": null,
+        "status": "Not started"
+      }
+    ],
+    "issues": []
+  },
+  "view": {
+    "function": "Service Transformation",
+    "quarter": "Q2",
+    "years": [
+      2026,
+      2027,
+      2028
+    ],
+    "last_year": 2028,
+    "title": "Service Transformation VCP Program Execution 2026-2028",
+    "kicker": "SERVICE TRANSFORMATION VCP",
+    "critical": {
+      "cols": [
+        "metric",
+        "baseline",
+        "target_2026",
+        "target_2027",
+        "target_2028",
+        "q_target",
+        "q_actual",
+        "signal"
+      ],
+      "rows": [
+        [
+          "Service Revenue",
+          "~€68M",
+          "€76.5M",
+          "€80.4M",
+          "€96M",
+          "€18.85M",
+          "€18.55M",
+          "Below target"
+        ],
+        [
+          "Service Igm",
+          "49.3%",
+          "50.0%",
+          "53.0%",
+          "56.7%",
+          "49.1%",
+          "47.5%",
+          "Below target"
+        ],
+        [
+          "Remote Resolution",
+          "26.8%",
+          "Not available",
+          "Not available",
+          ">36%",
+          "23.0%",
+          "23.0%",
+          "On / above target"
+        ]
+      ],
+      "signals": [
+        "Below target",
+        "Below target",
+        "On / above target"
+      ],
+      "cards": [
+        "3",
+        "2",
+        "1"
+      ]
+    },
+    "enabling": {
+      "cols": [
+        "metric",
+        "baseline",
+        "target_2028",
+        "q_target",
+        "q_actual",
+        "signal",
+        "note"
+      ],
+      "rows": [
+        [
+          "Contract Penetration",
+          "48.0%",
+          "55.0%",
+          "54.7%",
+          "54.0%",
+          "Below target",
+          "GTM enablement + bundling at sale"
+        ],
+        [
+          "CLV Revenue",
+          "€1.3M",
+          "€11M",
+          "€0.32M",
+          "€0.16M",
+          "Below target",
+          "TechMax, Hero features, upgrades"
+        ],
+        [
+          "Part Harvesting Savings",
+          "Baseline",
+          "(+)€2M",
+          "Not available",
+          "Not available",
+          "No data",
+          "Circular economy + IB returns"
+        ],
+        [
+          "Pricing / Value Realization",
+          "Not available",
+          "Not available",
+          "Not available",
+          "Not available",
+          "No data",
+          "Baseline, targets, committed action and quarterly data need completion"
+        ],
+        [
+          "T&M Margin",
+          "Not available",
+          "Not available",
+          "Not available",
+          "Not available",
+          "No data",
+          "Baseline, targets, committed action and quarterly data need completion"
+        ],
+        [
+          "Service Productivity",
+          "Not available",
+          "Not available",
+          "Not available",
+          "Not available",
+          "No data",
+          "Baseline, targets, committed action and quarterly data need completion"
+        ]
+      ],
+      "signals": [
+        "Below target",
+        "Below target",
+        "No data",
+        "No data",
+        "No data",
+        "No data"
+      ],
+      "cards": [
+        "2",
+        "2",
+        "4"
+      ]
+    },
+    "themes": [
+      {
+        "cells": [
+          "2026",
+          "Profitable Growth through Customer for Life 1.9M",
+          "TechMax in Core Block (Z70/Z90); PoS for (Z10/Z30) along with Catalog; CLV - EOS Extension, FD 30X30, Becon Monitor , Win11 PSC10; Dedicated Service comercial 3 regions and Service Operations Hedcount NAR 3 regions",
+          "62% | In progress"
+        ],
+        "status": "In progress",
+        "derived": "average of 4 action progress values"
+      },
+      {
+        "cells": [
+          "2026",
+          "Productivity - 1.5< + 0.2",
+          "High Activity Sites Monitoring, FRU Rationalization; Li Phosphate Battery (Poc) ++; Sevice Productivity Funnel expansion; COO Imrovement - Labor hrs reduction, Optimised allocations, Wrong bookings",
+          "62% | In progress"
+        ],
+        "status": "In progress",
+        "derived": "average of 4 action progress values"
+      },
+      {
+        "cells": [
+          "2026",
+          "Digital Service - Chat GPT AI Roadmap for Customer Experience",
+          "Chatbot based on Service Manual; PSC 10 and Connectivity improvement; RSDI - Remote software distribution and Installation -; Operational excellence - OPF, FVF, Remore rsolution",
+          "62% | In progress"
+        ],
+        "status": "In progress",
+        "derived": "average of 4 action progress values"
+      },
+      {
+        "cells": [
+          "2026",
+          "Process Improvement - +0.5M",
+          "IB retension - Visibility and Win rate; T&M - Zero Sales, Process gaps; Pricing Strategy - Priority regions",
+          "67% | In progress"
+        ],
+        "status": "In progress",
+        "derived": "average of 3 action progress values"
+      },
+      {
+        "cells": [
+          "2027",
+          "CLV, TechMax Propositions Expansions",
+          "Extend to FE - AVO, Elevate Upgrade, (SW High Margin); CLV Expansion - 32Inch Monitor, LiPH, Wireless Video , Onscreen Keyboard (HW)",
+          "25% | In progress"
+        ],
+        "status": "In progress",
+        "derived": "average of 2 action progress values"
+      },
+      {
+        "cells": [
+          "2027",
+          "Market Share Gain deom HC- CP Penetrtion, Inside Sales, CLV GTM strategy",
+          "CP Imprvement by XX%; CLV revenue by region - DMB and Tracking; Value Proposition Workshops for Regins; GTM",
+          "0% | Not started"
+        ],
+        "status": "Not started",
+        "derived": "average of 0 action progress values"
+      },
+      {
+        "cells": [
+          "2027",
+          "Profitability through Funnelled Project",
+          "Productivity Funnel - LiPh Battery, RSDI, PSC10; Warranty for consumable FRU, FRU nego, Derisking - PE CSCollaboraion; Service Delivery - CLV Margins and Contract / T&M Price Realisation DMB, Monitoring; Part Harvesting Supplier setup",
+          "0% | Not started"
+        ],
+        "status": "Not started",
+        "derived": "average of 0 action progress values"
+      },
+      {
+        "cells": [
+          "2028",
+          "CLV, TechMax Propositions Expansions",
+          "Extend to FE - iApps, Duel Fluro, Pinch Zoom / Xres, QCA, QVA, 30 FPS; CLV Expansion - 15Kw to 25KW, IGZo detector, Injector Interface (HW)",
+          "0% | Not started"
+        ],
+        "status": "Not started",
+        "derived": "average of 0 action progress values"
+      },
+      {
+        "cells": [
+          "2028",
+          "Profitability through Funnelled Project",
+          "Harvest- Differentiated Parts - Parts Nova; Gillardoni Derisking - PE CS colaboraion; techMax and Extended Warranty as Coreblock; Material and COO reduction - Labor cost optimisation, Allocation controls",
+          "0% | Not started"
+        ],
+        "status": "Not started",
+        "derived": "average of 0 action progress values"
+      }
+    ],
+    "dependencies": {
+      "rows": [
+        {
+          "cells": [
+            "Europe",
+            "Maximize Service growth",
+            "4: HOS pricing handshake; Tech Max 2026 Roadmap definition; Tech Max 2027 Roadmap; EW/TM Core Block proposition",
+            "100% | In progress"
+          ],
+          "status": "In progress"
+        },
+        {
+          "cells": [
+            "ISC",
+            "E2E portfolio simplificaiton \"TRIM\"",
+            "1: Identify Late cutomisation option which can be upgraded as FE kit to support core standard configuration",
+            "50% | In progress"
+          ],
+          "status": "In progress"
+        },
+        {
+          "cells": [
+            "Marketing",
+            "Driving launch success for Systems",
+            "6: Dhruv: Clarity on usability claims for CS features (26WK33); Dhruv: Clarity on CS feature claims list along with substantiation plan; Dhruv: CS training plan; Dhruv: CS content for Kick-off sales training (Q4); Dhruv: CS Training; Dhruv: CS online course code creation(Q1)",
+            "0% | Not started"
+          ],
+          "status": "Not started"
+        },
+        {
+          "cells": [
+            "NAR",
+            "OIT to Rev Cycle Time Reduction",
+            "1: Sales: drive adoption of FS- Ready configurations via meeting 0",
+            "50% | In progress"
+          ],
+          "status": "In progress"
+        },
+        {
+          "cells": [
+            "Quality",
+            "Reduce Product quality failures in Warranty-Part Complaints (Impact to be written); Reduce Product quality failures in Warranty-Non-Part Complaints",
+            "4: 1.Warranty failure data and associated cost; 2. Failed Samples of MVS Internal cables from Failure Lab analysis [BEST Location from Field returned part.]; 3. Tracking of dismantled MVS-PCs at Field to be reached at Redisys (Supplier); Data collection for Non Part failure",
+            "100% | In progress"
+          ],
+          "status": "In progress"
+        }
+      ],
+      "cards": [
+        "16",
+        "11",
+        "0"
+      ]
+    },
+    "impact": {
+      "rows": [
+        [
+          "Profitable Growth through Customer for Life 1.9M",
+          "Not available",
+          ""
+        ],
+        [
+          "Productivity - 1.5< + 0.2",
+          "Not available",
+          ""
+        ],
+        [
+          "Digital Service - Chat GPT AI Roadmap for Customer Experience",
+          "Not available",
+          ""
+        ],
+        [
+          "Process Improvement - +0.5M",
+          "Not available",
+          ""
+        ],
+        [
+          "CLV, TechMax Propositions Expansions",
+          "Not available",
+          ""
+        ],
+        [
+          "Market Share Gain deom HC- CP Penetrtion, Inside Sales, CLV GTM strategy",
+          "Not available",
+          ""
+        ],
+        [
+          "Profitability through Funnelled Project",
+          "Not available",
+          ""
+        ],
+        [
+          "CLV, TechMax Propositions Expansions",
+          "Not available",
+          ""
+        ],
+        [
+          "Profitability through Funnelled Project",
+          "Not available",
+          ""
+        ]
+      ],
+      "has_source_data": false
+    },
+    "rca": {
+      "rows": [
+        [
+          "Service Revenue",
+          "€18.55M vs €18.85M (-0.30M)",
+          "",
+          ""
+        ],
+        [
+          "Service Igm",
+          "47.5% vs 49.1% (-1.6 pts)",
+          "",
+          ""
+        ],
+        [
+          "Contract Penetration",
+          "54.0% vs 54.7% (-0.7 pts)",
+          "",
+          ""
+        ],
+        [
+          "CLV Revenue",
+          "€0.16M vs €0.32M (-0.16M)",
+          "",
+          ""
+        ]
+      ],
+      "readiness": [
+        [
+          "Owner fields",
+          "9/9 blank across commitment/KPI rows"
+        ],
+        [
+          "Target fields",
+          "2026 target missing 4/9; 2027 target missing 4/9; 2028 target missing 3/9"
+        ],
+        [
+          "Quarterly data",
+          "44/72 target/actual cells missing; 4 KPIs have no quarterly data"
+        ],
+        [
+          "Theme tracker blanks",
+          "Impact: 31/31 | Owner: 31/31 | Start Date: 31/31 | Theme Progress: 31/31"
+        ]
+      ]
+    },
+    "counts": {
+      "themes": 9,
+      "actions": 31,
+      "critical_kpis": 3,
+      "enabling_kpis": 6,
+      "dependencies": 16
+    }
+  },
+  "reconciliation": {
+    "excel_strings_checked": 84,
+    "excel_strings_missing": [],
+    "view_strings_expected": 138,
+    "view_strings_not_written": []
+  }
+}

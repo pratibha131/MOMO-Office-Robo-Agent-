@@ -1,4 +1,14 @@
 [{ "id": "t-20260828-1", "task": "Fix the VCP execution sheet Excel file", "assigned_by": "self",
-   "due": null, "due_type": null, "source": null, "done": false, "reminded": false },
+   "due": null, "due_type": null, "source": null, "done": true, "reminded": false },
  { "id": "t-20260828-2", "task": "Prepare the VCP review deck", "assigned_by": "self",
-   "due": null, "due_type": null, "source": null, "done": false, "reminded": false }]
+   "due": null, "due_type": null, "source": null, "done": true, "reminded": false },
+ { "id": "t-20260902-1", "task": "Operating cadence", "assigned_by": "self",
+   "due": "2026-09-03", "due_type": "date", "source": null, "done": true, "reminded": true },
+ { "id": "t-20260902-2", "task": "Dashboard Gonzalo", "assigned_by": "self",
+   "due": "2026-09-03", "due_type": "date", "source": null, "done": true, "reminded": true },
+ { "id": "t-20260902-3", "task": "Key theses", "assigned_by": "self",
+   "due": "2026-09-03", "due_type": "date", "source": null, "done": true, "reminded": true },
+ { "id": "t-20260902-4", "task": "Metrics", "assigned_by": "self",
+   "due": "2026-09-03", "due_type": "date", "source": null, "done": true, "reminded": true },
+ { "id": "t-20260902-5", "task": "MoMs", "assigned_by": "self",
+   "due": "2026-09-03", "due_type": "date", "source": null, "done": true, "reminded": true }]

@@ -1,0 +1,49 @@
+{
+  "voice": "en-IN-NeerjaNeural",
+  "character": "app/renderer/momo.png",
+  "caption": "Meet Momo - the little robot who lives on my desktop and quietly gets my workday done. One tap, one sentence: emails drafted (never sent without my yes), meetings booked, notes taken in Hindi or English, to-dos ticked, and yesterday she built my whole VCP presentation straight from the Excel. Everything stays on my laptop.\n\n#Momo #DesktopAgent #AIAssistant #ClaudeCode #VoiceAssistant #Productivity #WorkSmarter #BuildInPublic #AIAgents #Philips",
+  "scenes": [
+    {
+      "type": "hook",
+      "heading": "Meet Momo.",
+      "sub": "the little robot who lives on my desktop",
+      "narration": "Meet Momo. She lives in the corner of my screen, and quietly gets my day done."
+    },
+    {
+      "type": "caption",
+      "label": "Sound familiar?",
+      "side": "left",
+      "narration": "Forty emails, three meetings, a to-do list I keep forgetting. Sound familiar?"
+    },
+    {
+      "type": "feature",
+      "heading": "One tap. She handles it.",
+      "cards": [
+        "Drafts my emails, asks before sending",
+        "Books Teams meetings around my calendar",
+        "Takes notes in Hindi, English or Hinglish",
+        "Keeps my to-dos ticked in OneNote"
+      ],
+      "narration": "One tap, and I just talk. She drafts my emails, books my meetings, takes notes in Hindi or English, and keeps my to-dos ticked."
+    },
+    {
+      "type": "caption",
+      "label": "My favourite part",
+      "side": "right",
+      "narration": "Yesterday I said: take the excel and make me the presentation. Half a minute later it was open in PowerPoint. Every number exact."
+    },
+    {
+      "type": "caption",
+      "label": "Private by design",
+      "side": "left",
+      "narration": "Everything stays on my laptop. Nothing is ever sent without my yes."
+    },
+    {
+      "type": "cta",
+      "heading": "Everyone deserves a Momo.",
+      "sub": "Voice-driven. Offline ears. Big heart.",
+      "handle": "Follow for what she learns next",
+      "narration": "Everyone deserves a Momo. Follow along, and I'll show you what she learns next."
+    }
+  ]
+}

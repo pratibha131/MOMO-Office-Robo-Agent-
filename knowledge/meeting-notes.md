@@ -59,6 +59,45 @@ Rules of quality:
 4. Speak a 2-sentence summary: "Notes are open in Notepad. You picked up two tasks —
    the test report for Rahul by Tuesday, and the risk sheet before your next sync."
 
+## MOM Excel — EVERY meeting gets its own workbook (in ADDITION to the .md notes)
+For every meeting, generate a standalone MOM file with the ready-made tool (exact
+VCP styling — Aptos Narrow, steel-blue title bar, yellow section headers, bold
+decisions, bordered action table — is baked into it):
+1. Write `mom.json`: {"title", "date" DD-MM-YYYY, "decisions": [...],
+   "actions": [{"action","owner","timing"}]} (owner/timing "(to confirm)" when
+   attribution is uncertain — never invent).
+2. Run: `python python/momo_mom.py --json mom.json
+   --out "data/notes/MOM - <Topic> - YYYY-MM-DD.xlsx"` and open the file
+   (Start-Process) alongside the Notepad notes.
+3. If it was a VCP review (subject/attendees mention VCP, organizer Aditya
+   Jindal / VCP team), ALSO append a sheet in the central workbook
+   `Desktop/VCP-NEW-FORMAT/MOM VCP Meetings.xlsx` with the same content
+   (openpyxl, back it up first; if locked save a copy suffixed _with_new_MOM).
+
+## Writing decisions at Copilot quality
+Decisions/outcomes must read like commitments, not observations. Style rules
+(learned from the user's preferred exemplar):
+- Outcome-first phrasing: "X will shift to...", "A standardized framework will
+  connect...", "The team aligned on..." — never "there was a discussion about".
+- Merge fragments about one topic into ONE substantive line (aim 8-12 total).
+- Carry every number, metric name (EBITDA, CLV, market share), tool, and deadline
+  the transcript supports; generalize gracefully over garbled patches instead of
+  quoting noise, and only mark "(unclear)" when genuinely undecipherable.
+
+## Transcription-quality glossary (IMPORTANT — keep it fed)
+`data/meeting_glossary.txt` primes the speech model during meetings and commands —
+it is the difference between "काविय बारदवाज" and "Kavya Bhardwaj" in Hinglish audio.
+MAINTAIN IT: before summarizing, and whenever you meet new people/projects, append
+their names and recurring jargon (keep the file under ~120 lines, merge duplicates).
+Heartbeat may also add upcoming-meeting attendee names from the calendar.
+
+## Honesty about hard limits
+Momo hears ONE mixed audio stream (mic + speakers) — unlike Teams Copilot, which
+gets clean per-speaker cloud audio. So: attribute statements to named speakers only
+when the content makes it obvious; otherwise use "the team" / "it was discussed".
+Never invent owners for actions — write "(to confirm)" and tell the user which
+ones need confirming.
+
 ## Privacy
 Transcripts and notes NEVER leave data/. Do not email or upload them unless the user
 explicitly asks, and remind them the file contains meeting content when they do.

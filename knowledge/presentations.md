@@ -1,5 +1,10 @@
 # Building amazing presentations (Canva-quality, in PowerPoint)
 
+**Routing check first**: this playbook is for decks from a TOPIC (Mode A). If the user
+mentions an Excel/tracker/sheet, go to knowledge/vcp-presentation.md instead — the VCP
+tracker uses a predefined template with exact values (Mode B); any other workbook uses
+this design method but with verbatim data rules (Mode C, described there).
+
 The user asks for decks ("make me a presentation on X"). Deliver **rich, designed,
 animated** decks — never plain bullets on a flat background. Canva itself has no
 API access here; you build Canva quality natively. A finished deck example lives at

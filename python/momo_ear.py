@@ -116,6 +116,7 @@ class Ear:
         self.device = None
         self.device_name = "default"
         self.noise_floor = 150.0       # learned across utterances, not reset each time
+        self.glossary = ""
         self.you_agc = AutoGain()
         self.cmd_agc = AutoGain()
 
@@ -257,11 +258,22 @@ class Ear:
                 dbg("mic stream closed")
 
     # ---------- whisper helper ----------
+    def load_glossary(self):
+        """Names + domain jargon prime the model — the difference between
+        'काविय बारदवाज' and 'Kavya Bhardwaj' in a Hinglish meeting."""
+        try:
+            if self.args.glossary_file and os.path.exists(self.args.glossary_file):
+                with open(self.args.glossary_file, encoding="utf-8") as f:
+                    self.glossary = " ".join(f.read().split())[:900]
+        except Exception:
+            pass
+
     def transcribe(self, audio):
         if self.wm is None:
             return ""
         segments, _info = self.wm.transcribe(audio, language=None,
-                                             vad_filter=True, beam_size=1)
+                                             vad_filter=True, beam_size=1,
+                                             initial_prompt=self.glossary or None)
         return " ".join(s.text.strip() for s in segments).strip()
 
     # ---------- command listening ----------
@@ -486,6 +498,7 @@ class Ear:
     def start_meeting(self, path):
         if self.meeting:
             return
+        self.load_glossary()           # fresh names/terms for this meeting
         try:
             d = os.path.dirname(path)
             if d:
@@ -552,6 +565,7 @@ class Ear:
     # ---------- main loop ----------
     def run(self):
         self.load()
+        self.load_glossary()
         threading.Thread(target=self.command_worker, daemon=True).start()
         threading.Thread(target=self.meeting_worker, daemon=True).start()
         emit({"event": "daemon-ready", "device": self.device_name})
@@ -606,6 +620,8 @@ def main():
     ap.add_argument("--whisper-model", default="small")
     ap.add_argument("--chunk-sec", type=int, default=20)
     ap.add_argument("--input-device", default=None)
+    ap.add_argument("--glossary-file", default=None,
+                    help="text file of names/jargon used to prime transcription")
     ap.add_argument("--test-feed", default=None,
                     help="diagnostics: play a 16-bit mono WAV into the pipeline "
                          "instead of opening the microphone")

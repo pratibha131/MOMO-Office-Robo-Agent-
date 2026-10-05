@@ -39,5 +39,21 @@
     "useMcp": false,
     "sessionIdleResetMinutes": 30,
     "heartbeatModel": "haiku"
+  },
+  "vcp": {
+    "defaultFunction": null,
+    "quarter": null,
+    "impactSlide": "drop",
+    "allowExtraSlides": true,
+    "lowerBetterKpis": [],
+    "filePattern": "*VCP*Execution*.xls*",
+    "searchDirs": [
+      "~/Downloads",
+      "~/Desktop",
+      "~/OneDrive - Philips/Desktop",
+      "~/OneDrive - Philips/Documents",
+      "~/Documents"
+    ],
+    "_help": "Defaults Momo applies when you say 'take the excel and build the presentation'. defaultFunction null = Momo asks which tab; set a sheet name to skip the question. quarter null = auto-detect; impactSlide keep|drop; lowerBetterKpis = exact KPI names where a lower actual is good."
   }
 }

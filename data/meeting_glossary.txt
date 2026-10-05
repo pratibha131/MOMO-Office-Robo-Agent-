@@ -1,0 +1,9 @@
+Philips meeting vocabulary. People: Pratibha Mehta, Kavya Bhardwaj, Sunanda Sharma,
+Abhishek Chowdhary, Aditya Jindal, Rohit, Ketan Raval, Pavan, Sangram, Deepti,
+Shomik, Ritesh, Rahul, Rupali, Shivaraj, Chetan, Neena, Arnab, Tarun, Nisha, Rohan.
+Terms: VCP, VCP tracker, DMB, BCP, MoS, MoS GURU, EBITDA, CLV, BOM, IMS, GTM, KPI,
+KPIs, AOP, SNOP, LCM, SSCR, PMO, EOS, EOP, FCO, PSC10, TechMax, Core Block,
+Zenition, Z10, Z30, G70, install base, trade-in, harvesting, delisting, win/loss,
+market share, dashboards, working session, review cycle, action tracker, Excel,
+PPT, Copilot, OneNote, Teams, SharePoint, supplier consolidation, cost drivers,
+mix and volume, escalation, interdependency, stencil, root-cause analysis.

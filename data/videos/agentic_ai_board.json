@@ -1,0 +1,50 @@
+{
+  "voice": "en-IN-NeerjaNeural",
+  "character": "app/renderer/momo.png",
+  "theme": {"base": [10, 12, 30], "glow1": [124, 58, 237], "glow2": [34, 211, 238], "text": [245, 246, 252], "sub": [196, 200, 226], "accent": [45, 212, 191]},
+  "caption": "Agentic AI isn't just a chatbot - it's AI that plans, decides and takes action on its own to actually get things done. Here's what makes it different (and yes, I'm one of them).\n\n#AgenticAI #ArtificialIntelligence #AIAgents #FutureOfWork #TechExplained #AI #Automation #ClaudeCode #Momo #BuildInPublic",
+  "scenes": [
+    {
+      "type": "hook",
+      "heading": "Agentic AI.",
+      "sub": "it doesn't just chat, it acts",
+      "narration": "Agentic AI. It doesn't just chat with you, it gets things done."
+    },
+    {
+      "type": "caption",
+      "label": "Old AI",
+      "side": "left",
+      "narration": "Old AI could answer a question. But you still did all the actual work yourself."
+    },
+    {
+      "type": "caption",
+      "label": "Agentic AI",
+      "side": "right",
+      "narration": "Agentic AI plans the steps, picks the tools, and takes action on its own."
+    },
+    {
+      "type": "feature",
+      "heading": "It thinks in steps",
+      "cards": [
+        "Breaks your goal into steps",
+        "Picks the right tool for each",
+        "Acts, checks results, adjusts",
+        "Asks before anything risky"
+      ],
+      "narration": "It breaks your goal into steps, picks the right tool for each one, acts, checks the result, and asks before anything risky."
+    },
+    {
+      "type": "caption",
+      "label": "Not science fiction",
+      "side": "left",
+      "narration": "It's already here. Agents that draft your emails, book your meetings, even build your presentations."
+    },
+    {
+      "type": "cta",
+      "heading": "The agent era is starting.",
+      "sub": "One goal. It takes it from there.",
+      "handle": "Follow to see agentic AI in action",
+      "narration": "The agent era is just starting. Follow along, and I'll show you what these agents can really do."
+    }
+  ]
+}

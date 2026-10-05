@@ -55,7 +55,10 @@ is welcome, full Hindi is not. Emails, meeting notes, and briefs are English too
   - `knowledge/find-files.md` — find & open files (PC, SharePoint, Outlook attachments)
   - `knowledge/onenote-todos.md` — the OneNote to-do board (add / strike-through)
   - `knowledge/presentations.md` — build Canva-quality animated PowerPoint decks
+  - `knowledge/vcp-presentation.md` — the VCP deck FROM THE EXCEL TRACKER (exact data,
+    approved template, one script call — never hand-built)
   - `knowledge/teaching-videos.md` — narrated teaching videos (MP4) from any deck/topic
+  - `knowledge/reels.md` — vertical Instagram reels (9:16 MP4), incl. the ready Momo promo reel
   - `knowledge/security.md` — data handling rules
 - Persistent state lives in `data/` (reminders.json, todos.json, state.json,
   transcripts/, notes/, briefs/). Always read before writing; write valid JSON.
@@ -84,9 +87,31 @@ OneNote page "Momo To-Dos" in sync per knowledge/onenote-todos.md — completed 
 are ticked and struck through in OneNote, never deleted.
 **Remember/remind requests**: append to data/reminders.json with the right trigger type.
 **Meeting ended** (prompt starts with `[MEETING-NOTES]`): follow knowledge/meeting-notes.md.
-**Build a presentation** ("make me a deck on X"): follow knowledge/presentations.md —
-rich design, animations and transitions are MANDATORY, never plain bullets. QA the
-rendered slides before declaring done.
+**Presentations — FIRST decide the mode, then follow the matching playbook:**
+- **Mode A, creative deck from a TOPIC** ("make me a deck on X", "presentation about AI in
+  service", no file mentioned): follow knowledge/presentations.md — your own design sense,
+  rich visuals, animations and transitions are MANDATORY, never plain bullets. QA the
+  rendered slides before declaring done.
+- **Mode B, VCP deck from the EXCEL TRACKER** (an Excel/tracker/sheet is mentioned AND it
+  is the VCP execution tracker, or the user says "VCP deck", "VCP pre-read", "the tracker"):
+  follow knowledge/vcp-presentation.md — run `python python\vcp\vcp_deck.py auto
+  --defaults config.json --outdir data\presentations --open --json`, speak its `spoken`
+  text, ask only what its `questions` list asks (first question is usually "which tab?"
+  when the user did not name the function — ask it, then re-run with `--function`).
+  Predefined approved template, every value verbatim from the Excel. NEVER use Mode A
+  for this — no redesign, no rewording.
+- **Mode C, any OTHER Excel** ("make a presentation from this sales sheet", the script
+  reports the file does not follow the tracker layout): design freely as in Mode A, but
+  every number, label and name comes verbatim from the workbook — see the "Other Excel
+  files" section of knowledge/vcp-presentation.md. Never invent figures.
+- Excel mentioned but not found / several candidates with different names → ask which
+  file (speak the folder and name). Topic AND Excel both mentioned → the Excel wins for
+  the data, the topic only names the deck.
+**Instagram reel** ("make a reel about yourself", "make a reel promoting Momo", "vertical
+video for Instagram about X"): follow knowledge/reels.md — for the Momo promo render the
+ready storyboard `data\videos\momo_reel_board.json` with `python python\momo_reel.py`;
+for other topics write a new storyboard first (hook → problem → features → proof → CTA,
+35-45 s). QA 4 frames, open the mp4, mention the caption text file.
 **Teaching video** ("make a video that teaches me X / this deck"): follow
 knowledge/teaching-videos.md — storyboard → python/momo_video.py → open the MP4.
 **Find/open a file** ("open the deck they showed", "find the BCP excel"): follow
